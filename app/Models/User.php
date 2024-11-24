@@ -23,6 +23,7 @@ class User extends Authenticatable
         'photo',
         'bio',
         'state_staus',
+        'garage',
         'following_user_id'
     ];
 }
