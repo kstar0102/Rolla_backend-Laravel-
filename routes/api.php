@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\TripController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,11 @@ Route::group(['prefix' => 'user'], static function () {
     Route::get('info', [UserController::class, 'getUserInfo']);
     Route::put('update', [UserController::class, 'updateUserInfo']);
     Route::delete('delete', [UserController::class, 'deleteUserAccount']);
+});
+
+// Trip routes
+Route::group(['prefix' => 'trip'], static function () {
+    Route::get('data', [TripController::class, 'getAllTrips']);
 });
 
 // Catch-all route for unknown endpoints

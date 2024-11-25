@@ -25,4 +25,14 @@ class Trip extends Model
     {
         return $this->hasMany(Droppin::class, 'trip_id', 'id');
     }
+    
+    public function comments()
+    {
+        return $this->hasMany(Comments::class, 'trip_id', 'id');
+    }
+        
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
 }
