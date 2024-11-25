@@ -107,6 +107,7 @@ class AuthController extends Controller
                 if (!Hash::check($request->password, $user->password)) {
                     return response()->json(['message' => 'Invalid credentials'], 401);
                 } else {
+                    $user->load(['trips.droppins']);
                     $token = $user->createToken('auth_token')->plainTextToken;
                     return response()->json([
                         'message' => 'Login success',

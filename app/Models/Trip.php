@@ -20,4 +20,9 @@ class Trip extends Model
         'trip_miles',
         'trip_sound'
     ];
+
+    public function droppins()
+    {
+        return $this->hasMany(Droppin::class, 'trip_id', 'id');
+    }
 }

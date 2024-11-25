@@ -60,10 +60,12 @@ class UserController extends Controller
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'rolla_username' => 'required|string|max:255',
-                'happy_place' => 'required|string|max:255',
-                'photo' => 'required|string|max:255',
-                'bio' => 'required|string|max:255',
-                'garage' => 'required|string|max:255'
+                'happy_place' => 'nullable|string|max:255',
+                'photo' => 'nullable|string|max:255',
+                'bio' => 'nullable|string|max:255',
+                'garage' => 'nullable|string|max:255',
+                'country' => 'nullable|string|max:255',
+                'hear_rolla' => 'nullable|string|max:255'
             ]);
 
             $user = User::find($validated['user_id']);

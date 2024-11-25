@@ -26,4 +26,9 @@ class User extends Authenticatable
         'garage',
         'following_user_id'
     ];
+
+    public function trips()
+    {
+        return $this->hasMany(Trip::class, 'user_id', 'id');
+    }
 }
