@@ -22,7 +22,7 @@ class User extends Authenticatable
         'hear_rolla',
         'photo',
         'bio',
-        'state_staus',
+        'state_status',
         'garage',
         'following_user_id'
     ];

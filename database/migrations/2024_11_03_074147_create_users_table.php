@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('hear_rolla')->nullable();
             $table->string('photo')->nullable();
             $table->string('bio')->nullable();
-            $table->integer('state_staus')->default(0);
+            $table->integer('state_status')->default(0);
             $table->string('following_user_id')->default('');
             $table->timestamps();
         });

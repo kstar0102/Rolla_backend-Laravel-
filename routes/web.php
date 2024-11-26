@@ -1,29 +1,34 @@
 <?php
 
 use App\Http\Livewire\BootstrapTables;
+use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\Components\Buttons;
 use App\Http\Livewire\Components\Forms;
 use App\Http\Livewire\Components\Modals;
 use App\Http\Livewire\Components\Typography;
 use App\Http\Livewire\Dashboard;
+use App\Http\Livewire\Auth\Login;
+use App\Http\Livewire\Auth\Register;
+use App\Http\Livewire\Users;
+use App\Http\Livewire\UserCreate;
+use App\Http\Livewire\UserDetails;
+use App\Http\Livewire\UserEdit;
+
+
 use App\Http\Livewire\Err404;
 use App\Http\Livewire\Err500;
 use App\Http\Livewire\ResetPassword;
 use App\Http\Livewire\ForgotPassword;
 use App\Http\Livewire\Lock;
-use App\Http\Livewire\Auth\Login;
 use App\Http\Livewire\Profile;
-use App\Http\Livewire\Auth\Register;
 use App\Http\Livewire\ForgotPasswordExample;
 use App\Http\Livewire\Index;
 use App\Http\Livewire\LoginExample;
 use App\Http\Livewire\ProfileExample;
 use App\Http\Livewire\RegisterExample;
 use App\Http\Livewire\Transactions;
-use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\ResetPasswordExample;
 use App\Http\Livewire\UpgradeToPro;
-use App\Http\Livewire\Users;
 use App\Http\Livewire\Drivers;
 use App\Http\Livewire\DriverCreate;
 use App\Http\Livewire\DriverDetails;
@@ -67,6 +72,11 @@ Route::get('/500', Err500::class)->name('500');
 Route::get('/upgrade-to-pro', UpgradeToPro::class)->name('upgrade-to-pro');
 Route::get('/payment-success', function() { return "Payment Successful!";});
 Route::middleware('auth')->group(function () {
+    Route::get('/users', Users::class)->name('users');
+    Route::get('/user/create', UserCreate::class)->name('usercreate');
+    Route::get('/user/details/{id}', UserDetails::class)->name('userdetails');
+    Route::get('/user/edit/{id}', UserEdit::class)->name('useredit');
+
     Route::get('/drivers', Drivers::class)->name('drivers');
     Route::get('/driver/create', DriverCreate::class)->name('drivercreate');
     Route::get('/driver/details/{id}', DriverDetails::class)->name('driverdetails');

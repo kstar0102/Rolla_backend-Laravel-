@@ -50,73 +50,17 @@
           <span class="sidebar-text">Dashboard</span>
         </a>
       </li>
-      <li class="nav-item">
-        <span
-          class="nav-link {{ Request::segment(1) == 'drivers' || Request::segment(1) == 'driver' || Request::segment(1) == 'earning' ? '' : 'collapsed' }} d-flex justify-content-between align-items-center"
-          data-bs-toggle="collapse" data-bs-target="#submenu-drivers">
-          <span>
-            <span class="sidebar-icon">
-              <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                  d="M16 19h4a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-2m-2.236-4a3 3 0 1 0 0-4M3 18v-1a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                  clip-rule="evenodd"></path>
-              </svg>
-            </span>
-            <span class="sidebar-text">Driver Management</span>
-          </span>
-          <span class="link-arrow"><svg class="icon icon-sm" fill="currentColor" viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg">
+      <li class="nav-item {{ Request::segment(1) == 'users' || Request::segment(1) == 'usercreate' ? 'active' : '' }}">
+        <a href="/users" class="nav-link">
+          <span class="sidebar-icon">
+            <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd"
-                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                d="M16 19h4a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-2m-2.236-4a3 3 0 1 0 0-4M3 18v-1a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                 clip-rule="evenodd"></path>
-            </svg></span>
-        </span>
-        <div class="multi-level collapse {{ Request::segment(1) == 'drivers' || Request::segment(1) == 'driver' || Request::segment(1) == 'earning' ? 'show' : '' }}" role="list"
-          id="submenu-drivers" aria-expanded="false">
-          <ul class="flex-column nav">
-            <li class="nav-item {{ Request::segment(1) == 'drivers' ? 'active' : '' }}">
-              <a class="nav-link" href="/drivers">
-                <span class="sidebar-text">Drivers</span>
-              </a>
-            </li>
-            <li class="nav-item {{ Request::segment(1) == 'earning' ? 'active' : '' }}">
-              <a class="nav-link" href="/earning">
-                <span class="sidebar-text">Driver Earning</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </li>
-      <li class="nav-item">
-        <span
-          class="nav-link {{ Request::segment(1) == 'riders' || Request::segment(1) == 'riderequest' || Request::segment(1) == 'rider' || Request::segment(1) == 'riderequestdetails' ? '' : 'collapsed' }} d-flex justify-content-between align-items-center"
-          data-bs-toggle="collapse" data-bs-target="#submenu-rides">
-          <span>
-            <span class="sidebar-icon">
-              <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                  d="M16 19h4a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-2m-2.236-4a3 3 0 1 0 0-4M3 18v-1a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                  clip-rule="evenodd"></path>
-              </svg>
-            </span>
-            <span class="sidebar-text">Ride Management</span>
-          </span>
-          <span class="link-arrow">
-            <svg class="icon icon-sm" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
             </svg>
           </span>
-        </span>
-        <div class="multi-level collapse {{ Request::segment(1) == 'riders' || Request::segment(1) == 'riderequest' || Request::segment(1) == 'rider' || Request::segment(1) == 'riderequestdetails' ? 'show' : '' }}" role="list"
-          id="submenu-rides" aria-expanded="false">
-          <ul class="flex-column nav">
-            <li class="nav-item {{ Request::segment(1) == 'riders' ? 'active' : '' }}">
-              <a class="nav-link" href="/riders">
-                <span class="sidebar-text">Riders</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+          <span class="sidebar-text">User Management</span>
+        </a>
       </li>
       <li class="nav-item {{ Request::segment(1) == 'transactions' ? 'active' : '' }}">
         <a href="/transactions" class="nav-link">
