@@ -90,7 +90,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'identifier' => 'required|string|max:255', // Identifier can be email or username
+            'identifier' => 'required|string|max:255',
             'password' => 'required|string|max:255',
         ]);
     
@@ -100,14 +100,13 @@ class AuthController extends Controller
     
         try {
             $user = User::where('email', $request->identifier)
-                            ->orWhere('rolla_username', $request->identifier)
-                            ->first();
+                ->orWhere('rolla_username', $request->identifier)
+                ->first();
     
             if ($user) {
                 if (!Hash::check($request->password, $user->password)) {
                     return response()->json(['message' => 'Invalid credentials'], 401);
                 } else {
-                    // Extract and sum numeric values from trip_miles
                     $tripMilesSum = Trip::where('user_id', $user->id)
                         ->get()
                         ->reduce(function ($sum, $trip) {
@@ -115,20 +114,29 @@ class AuthController extends Controller
                             return $sum + $miles;
                         }, 0);
     
-                    // Fetch all droppins for the user's trips
                     $droppins = Droppin::whereIn(
                         'trip_id',
                         Trip::where('user_id', $user->id)->pluck('id')
                     )->get();
+
+                    $totalTrips = Trip::where('user_id', $user->id)->count();
+    
+                    $followingIds = collect(explode(',', $user->following_user_id))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)))
+                        ->unique()
+                        ->count();
     
                     $token = $user->createToken('auth_token')->plainTextToken;
     
                     return response()->json([
                         'message' => 'Login success',
                         'token' => $token,
-                        'userData' => $user, // All user data
-                        'trip_miles_sum' => $tripMilesSum, // Sum of trip_miles as a numeric value
-                        'droppins' => $droppins, // All droppins
+                        'userData' => $user,
+                        'trip_miles_sum' => $tripMilesSum,
+                        'droppins' => $droppins,
+                        'total_trips' => $totalTrips,
+                        'following_count' => $followingIds,
                     ], 200);
                 }
             } else {
@@ -139,7 +147,6 @@ class AuthController extends Controller
         }
     }
     
-
     public function logout(Request $request)
     {
         

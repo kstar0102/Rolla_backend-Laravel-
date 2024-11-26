@@ -28,6 +28,7 @@ Route::group(['prefix' => 'auth'], static function () {
 Route::group(['prefix' => 'user'], static function () {
     Route::get('info', [UserController::class, 'getUserInfo']);
     Route::put('update', [UserController::class, 'updateUserInfo']);
+    Route::get('following_users', [UserController::class, 'getFollowingUsers']);
     Route::delete('delete', [UserController::class, 'deleteUserAccount']);
 });
 

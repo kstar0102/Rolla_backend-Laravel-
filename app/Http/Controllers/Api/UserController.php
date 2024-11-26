@@ -96,6 +96,54 @@ class UserController extends Controller
     }
 
     /**
+     * Get following users' information.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function getFollowingUsers(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if ($user) {
+                $followingIds = collect(explode(',', $user->following_user_id))
+                    ->filter()
+                    ->map(fn($id) => intval(trim($id)))
+                    ->unique()
+                    ->values();
+
+                $followingUsers = User::whereIn('id', $followingIds)
+                    ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
+                    ->get();
+
+                $response = [
+                    'statusCode' => true,
+                    'message' => "Following users retrieved successfully",
+                    'data' => $followingUsers,
+                ];
+                return response()->json($response, 200);
+            } else {
+                $response = [
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ];
+                return response()->json($response, 404);
+            }
+        } catch (\Exception $e) {
+            $response = [
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ];
+            return response()->json($response, 500);
+        }
+    }
+
+    /**
      * Delete user account.
      *
      * @param Request $request
