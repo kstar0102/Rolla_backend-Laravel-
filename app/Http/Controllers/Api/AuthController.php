@@ -115,9 +115,23 @@ class AuthController extends Controller
                         }, 0);
     
                     $droppins = Droppin::whereIn(
-                        'trip_id',
-                        Trip::where('user_id', $user->id)->pluck('id')
-                    )->get();
+                            'trip_id',
+                            Trip::where('user_id', $user->id)->pluck('id')
+                        )->get()
+                        ->map(function ($droppin) {
+                            $likesUserIds = collect(explode(',', $droppin->likes_user_id))
+                                ->filter()
+                                ->map(fn($id) => intval(trim($id)))
+                                ->unique();
+        
+                            $likedUsers = User::whereIn('id', $likesUserIds)
+                                ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
+                                ->get();
+        
+                            $droppin->liked_users = $likedUsers;
+        
+                            return $droppin;
+                        });
 
                     $totalTrips = Trip::where('user_id', $user->id)->count();
     

@@ -17,4 +17,10 @@ class Droppin extends Model
         'image_caption',
         'likes_user_id'
     ];
+
+    public function likedUsers()
+    {
+        return $this->belongsToMany(User::class, 'users', 'id', 'id')
+            ->whereRaw("FIND_IN_SET(users.id, droppins.likes_user_id)");
+    }
 }
