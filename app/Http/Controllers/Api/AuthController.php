@@ -113,6 +113,7 @@ class AuthController extends Controller
                             $miles = floatval(str_replace('km', '', $trip->trip_miles));
                             return $sum + $miles;
                         }, 0);
+                    $tripMilesSum = number_format($tripMilesSum, 1, '.', '');
     
                     $droppins = Droppin::whereIn(
                             'trip_id',
