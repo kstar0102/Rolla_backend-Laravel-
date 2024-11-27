@@ -36,6 +36,7 @@ Route::group(['prefix' => 'user'], static function () {
 // Trip routes
 Route::group(['prefix' => 'trip'], static function () {
     Route::get('data', [TripController::class, 'getAllTrips']);
+    Route::post('create', [TripController::class, 'createTrip']);
 });
 
 // Catch-all route for unknown endpoints

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('stop_index');
             $table->string('image_path');
             $table->string('image_caption');
-            $table->string('likes_user_id');
+            $table->string('likes_user_id')->default('');
             $table->timestamps();
         });
     }
