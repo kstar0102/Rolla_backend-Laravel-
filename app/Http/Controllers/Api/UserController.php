@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Droppin;
 
 class UserController extends Controller
 {
@@ -140,6 +141,52 @@ class UserController extends Controller
                 'message' => $e->getMessage(),
             ];
             return response()->json($response, 500);
+        }
+    }
+
+    /**
+     * Add a like to a droppin by a user.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function droppinLike(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'droppin_id' => 'required|integer|exists:droppins,id',
+            ]);
+
+            $droppin = Droppin::find($validated['droppin_id']);
+
+            if (!$droppin) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "Droppin not found",
+                ], 404);
+            }
+
+            // Get the current likes_user_id and decode it into an array
+            $likes = $droppin->likes_user_id ? explode(',', $droppin->likes_user_id) : [];
+
+            // Add the user_id to the array if not already present
+            if (!in_array($validated['user_id'], $likes)) {
+                $likes[] = $validated['user_id'];
+                $droppin->likes_user_id = implode(',', $likes);
+                $droppin->save();
+            }
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Droppin liked successfully",
+                'data' => $droppin,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 
