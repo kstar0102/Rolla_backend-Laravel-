@@ -31,4 +31,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(Trip::class, 'user_id', 'id');
     }
+
+    public function getFollowingUsers()
+    {
+        $followingIds = collect(explode(',', $this->following_user_id))
+            ->filter()
+            ->map(fn($id) => intval(trim($id)))
+            ->unique();
+
+        return self::whereIn('id', $followingIds)
+            ->select('id', 'rolla_username', 'first_name', 'last_name', 'photo')
+            ->get();
+    }
 }

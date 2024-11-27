@@ -135,8 +135,8 @@ class AuthController extends Controller
                         });
 
                     $totalTrips = Trip::where('user_id', $user->id)->count();
-    
-                    $followingIds = collect(explode(',', $user->following_user_id))
+                    $followingUsers = $user->getFollowingUsers();
+                    $followingCount = collect(explode(',', $user->following_user_id))
                         ->filter()
                         ->map(fn($id) => intval(trim($id)))
                         ->unique()
@@ -151,7 +151,8 @@ class AuthController extends Controller
                         'trip_miles_sum' => $tripMilesSum,
                         'droppins' => $droppins,
                         'total_trips' => $totalTrips,
-                        'following_count' => $followingIds,
+                        'following_users' => $followingUsers,
+                        'following_count' => $followingCount,
                     ], 200);
                 }
             } else {
