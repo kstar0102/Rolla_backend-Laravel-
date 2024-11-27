@@ -9,7 +9,8 @@ use Illuminate\Support\Str;
 
 class Register extends Component
 {
-
+    public $first_name = '';
+    public $last_name = '';
     public $email = '';
     public $password = '';
     public $passwordConfirmation = '';
@@ -29,14 +30,17 @@ class Register extends Component
     public function register()
     {
         $this->validate([
-            'email' => 'required',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|string|max:255|unique:users,email',
             'password' => 'required|same:passwordConfirmation|min:6',
         ]);
 
         $user = User::create([
-            'email' =>$this->email,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'email' => $this->email,
             'password' => Hash::make($this->password),
-            'remember_token' => Str::random(10),
         ]);
 
         auth()->login($user);

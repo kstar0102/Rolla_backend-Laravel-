@@ -60,8 +60,7 @@
                                             Remember me
                                         </label>
                                     </div>
-                                    <div><a href="{{ route('forgot-password') }}" class="small text-right">Lost
-                                            password?</a></div>
+                                    <!-- <div><a href="{{ route('forgot-password') }}" class="small text-right">Lost password?</a></div> -->
                                 </div>
                             </div>
                             <div class="d-grid">

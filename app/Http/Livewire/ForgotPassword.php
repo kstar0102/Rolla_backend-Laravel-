@@ -34,19 +34,16 @@ class ForgotPassword extends Component
     {
         $this->validate(['email'=>'required|email|exists:users']);
     }
+
     public function routeNotificationForMail() {
         return $this->email;
     }
+    
     public function recoverPassword() {
-        if(env('IS_DEMO')) {
-            $this->showDemoNotification = true;
-        }
-        else {
-            $this->validate();
-            $user=User::where('email', $this->email)->first();
-            $this->notify(new ResetPassword($user->id));
-            $this->mailSentAlert = true;
-        }
+        $this->validate();
+        $user=User::where('email', $this->email)->first();
+        $this->notify(new ResetPassword($user->id));
+        $this->mailSentAlert = true;
     }
 
     public function render()
