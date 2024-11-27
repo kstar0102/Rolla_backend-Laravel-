@@ -13,6 +13,8 @@ use App\Http\Livewire\Users;
 use App\Http\Livewire\UserCreate;
 use App\Http\Livewire\UserDetails;
 use App\Http\Livewire\UserEdit;
+use App\Http\Livewire\Trips;
+use App\Http\Livewire\TripDetails;
 
 
 use App\Http\Livewire\Err404;
@@ -69,34 +71,13 @@ Route::get('/reset-password/{id}', ResetPassword::class)->name('reset-password')
 
 Route::get('/404', Err404::class)->name('404');
 Route::get('/500', Err500::class)->name('500');
-Route::get('/upgrade-to-pro', UpgradeToPro::class)->name('upgrade-to-pro');
-Route::get('/payment-success', function() { return "Payment Successful!";});
+
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/users', Users::class)->name('users');
     Route::get('/user/create', UserCreate::class)->name('usercreate');
     Route::get('/user/details/{id}', UserDetails::class)->name('userdetails');
     Route::get('/user/edit/{id}', UserEdit::class)->name('useredit');
-
-    Route::get('/drivers', Drivers::class)->name('drivers');
-    Route::get('/driver/create', DriverCreate::class)->name('drivercreate');
-    Route::get('/driver/details/{id}', DriverDetails::class)->name('driverdetails');
-    Route::get('/driver/edit/{id}', DriverEdit::class)->name('driveredit');
-    Route::get('/earning', DriverEarning::class)->name('earning');
-    Route::get('/riders', Riders::class)->name('riders');
-    Route::get('/rider/create', RiderCreate::class)->name('ridercreate');
-    Route::get('/rider/edit/{id}', RiderEdit::class)->name('rideredit');
-    Route::get('/orders', RideRequest::class)->name('riderequest');
-    Route::get('/riderequest/create', RideRequestCreate::class)->name('riderequestcreate');
-    Route::get('/order/{id}', Riderequestdetails::class)->name('riderequestdetails');
-    Route::get('/driverratings', DriverRatings::class)->name('driverratings');
-    Route::get('/driverratings/{id}', DriverRatingDetails::class)->name('driverratingdetails');
-    Route::get('/riderratings', RiderRatings::class)->name('riderratings');
-    Route::get('/riderratings/{id}', RiderRatingDetails::class)->name('riderratingdetails');
-    Route::get('/feedback', Feedback::class)->name('feedback');
-    Route::get('/feedback/{id}', FeedbackDetails::class)->name('feedbackdetails');
-    Route::get('/dashboard', Dashboard::class)->name('dashboard');
-    Route::get('/transactions', Transactions::class)->name('transactions');
-    Route::get('/notifications', Notifications::class)->name('notifications');
-    Route::get('/notifications/create', NotificationCreate::class)->name('notificationcreate');
-    Route::get('/notifications/{id}', NotificationDetails::class)->name('notificationdetails');
+    Route::get('/trips', Trips::class)->name('trips');
+    Route::get('/trip/details/{id}', TripDetails::class)->name('tripdetails');
 });

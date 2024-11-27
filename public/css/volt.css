@@ -19096,3 +19096,18 @@ article .h1, article .h2, article .h3, article .h4, article .h5, article .h6 {
 .driver-info > img {
   border-radius: 50%;
 }
+
+.like-user-image {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.like-user > p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.like-user > span {
+  color: grey;
+  font-size: 12px;
+}
