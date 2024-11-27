@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TripController;
+use App\Http\Controllers\Api\CommentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,10 @@ Route::group(['prefix' => 'user'], static function () {
 Route::group(['prefix' => 'trip'], static function () {
     Route::get('data', [TripController::class, 'getAllTrips']);
     Route::post('create', [TripController::class, 'createTrip']);
+});
+
+Route::group(['prefix' => 'comment'], static function () {
+    Route::post('create', [CommentController::class, 'createComment']);
 });
 
 // Catch-all route for unknown endpoints
