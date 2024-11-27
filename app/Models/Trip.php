@@ -18,7 +18,8 @@ class Trip extends Model
         'trip_start_date',
         'trip_end_date',
         'trip_miles',
-        'trip_sound'
+        'trip_sound',
+        'trip_caption'
     ];
 
     public function droppins()
