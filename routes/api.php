@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\CarTypeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,9 @@ Route::group(['prefix' => 'trip'], static function () {
 Route::group(['prefix' => 'comment'], static function () {
     Route::post('create', [CommentController::class, 'createOrUpdateComment']);
 });
+
+
+Route::get('car_types', [CarTypeController::class, 'getCarTypes']);
 
 // Catch-all route for unknown endpoints
 Route::fallback(function () {
