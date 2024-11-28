@@ -156,10 +156,11 @@ class UserController extends Controller
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
                 'droppin_id' => 'required|integer|exists:droppins,id',
+                'flag' => 'required|boolean',
             ]);
-
+    
             $droppin = Droppin::find($validated['droppin_id']);
-
+    
             if (!$droppin) {
                 return response()->json([
                     'statusCode' => false,
@@ -167,19 +168,24 @@ class UserController extends Controller
                 ], 404);
             }
 
-            // Get the current likes_user_id and decode it into an array
             $likes = $droppin->likes_user_id ? explode(',', $droppin->likes_user_id) : [];
-
-            // Add the user_id to the array if not already present
-            if (!in_array($validated['user_id'], $likes)) {
-                $likes[] = $validated['user_id'];
-                $droppin->likes_user_id = implode(',', $likes);
-                $droppin->save();
+    
+            if ($validated['flag']) {
+                if (!in_array($validated['user_id'], $likes)) {
+                    $likes[] = $validated['user_id'];
+                }
+            } else {
+                if (in_array($validated['user_id'], $likes)) {
+                    $likes = array_diff($likes, [$validated['user_id']]);
+                }
             }
-
+            
+            $droppin->likes_user_id = implode(',', $likes);
+            $droppin->save();
+    
             return response()->json([
                 'statusCode' => true,
-                'message' => "Droppin liked successfully",
+                'message' => $validated['flag'] ? "Droppin liked successfully" : "Droppin unliked successfully",
                 'data' => $droppin,
             ], 200);
         } catch (\Exception $e) {
@@ -188,7 +194,7 @@ class UserController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
-    }
+    }    
 
     /**
      * Delete user account.
