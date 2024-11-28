@@ -43,4 +43,16 @@ class User extends Authenticatable
             ->select('id', 'rolla_username', 'first_name', 'last_name', 'photo')
             ->get();
     }
+
+    public function getGarageDetails()
+    {
+        $garageIds = collect(explode(',', $this->garage))
+            ->filter()
+            ->map(fn($id) => intval(trim($id)))
+            ->unique();
+
+        return CarType::whereIn('id', $garageIds)
+            ->select('id', 'car_type', 'logo_path')
+            ->get();
+    }
 }

@@ -141,7 +141,7 @@ class AuthController extends Controller
                         ->map(fn($id) => intval(trim($id)))
                         ->unique()
                         ->count();
-    
+                    $garageDetails = $user->getGarageDetails();
                     $token = $user->createToken('auth_token')->plainTextToken;
     
                     return response()->json([
@@ -153,6 +153,7 @@ class AuthController extends Controller
                         'total_trips' => $totalTrips,
                         'following_users' => $followingUsers,
                         'following_count' => $followingCount,
+                        'garages' => $garageDetails
                     ], 200);
                 }
             } else {
