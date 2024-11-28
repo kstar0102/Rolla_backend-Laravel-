@@ -106,20 +106,34 @@ class TripController extends Controller
     public function getAllTrips(Request $request)
     {
         try {
-            // Eager load only required fields
             $trips = Trip::with([
-                'user:id,photo,rolla_username',
+                'user:id,photo,rolla_username,first_name,last_name',
                 'droppins',
-                'comments.user:id,photo,rolla_username',
+                'comments.user:id,photo,rolla_username,first_name,last_name',
             ])->get();
     
-            // Transform the trips
             $trips->transform(function ($trip) {
                 $trip->user = $trip->user ? [
                     'id' => $trip->user->id,
                     'photo' => $trip->user->photo,
                     'rolla_username' => $trip->user->rolla_username,
                 ] : null;
+    
+                $trip->droppins->transform(function ($droppin) {
+                    // Parse likes_user_id and fetch user details
+                    $userIds = collect(explode(',', $droppin->likes_user_id))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)))
+                        ->unique();
+    
+                    $likedUsers = User::whereIn('id', $userIds)
+                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                        ->get();
+    
+                    $droppin->liked_users = $likedUsers;
+    
+                    return $droppin;
+                });
     
                 $trip->comments->transform(function ($comment) {
                     if ($comment->user) {
@@ -135,7 +149,6 @@ class TripController extends Controller
                 return $trip;
             });
     
-            // Return the response
             return response()->json([
                 'message' => 'All trips retrieved successfully',
                 'trips' => $trips,
@@ -146,5 +159,5 @@ class TripController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }    
+    }      
 }
