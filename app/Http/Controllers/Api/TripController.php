@@ -106,17 +106,38 @@ class TripController extends Controller
     public function getAllTrips(Request $request)
     {
         try {
-            $trips = Trip::with([
+            $username = $request->input('username');
+            $destination = $request->input('destination');
+
+            $tripsQuery = Trip::with([
                 'user:id,photo,rolla_username,first_name,last_name',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
-            ])->get();
+            ]);
+
+            if (!empty($username)) {
+                $tripsQuery->whereHas('user', function ($query) use ($username) {
+                    $query->where('first_name', 'LIKE', "%{$username}%")
+                        ->orWhere('last_name', 'LIKE', "%{$username}%")
+                        ->orWhere('rolla_username', 'LIKE', "%{$username}%");
+                });
+            }
+    
+            // Filter by destination address
+            if (!empty($destination)) {
+                $tripsQuery->where('destination_address', 'LIKE', "%{$destination}%");
+            }
+    
+            // Get the filtered trips
+            $trips = $tripsQuery->get();
     
             $trips->transform(function ($trip) {
                 $trip->user = $trip->user ? [
                     'id' => $trip->user->id,
                     'photo' => $trip->user->photo,
                     'rolla_username' => $trip->user->rolla_username,
+                    'first_name' => $trip->user->first_name,
+                    'last_name' => $trip->user->last_name,
                 ] : null;
     
                 $trip->droppins->transform(function ($droppin) {
@@ -141,6 +162,8 @@ class TripController extends Controller
                             'id' => $comment->user->id,
                             'photo' => $comment->user->photo,
                             'rolla_username' => $comment->user->rolla_username,
+                            'first_name' => $comment->user->first_name,
+                            'last_name' => $comment->user->last_name,
                         ];
                     }
                     return $comment;
@@ -159,5 +182,5 @@ class TripController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }      
+    }
 }
