@@ -41,7 +41,7 @@ Route::group(['prefix' => 'trip'], static function () {
 });
 
 Route::group(['prefix' => 'comment'], static function () {
-    Route::post('create', [CommentController::class, 'createComment']);
+    Route::post('create', [CommentController::class, 'createOrUpdateComment']);
 });
 
 // Catch-all route for unknown endpoints

@@ -29,35 +29,49 @@ class CommentController extends Controller
     {
     }
 
-    public function createComment(Request $request)
+    public function createOrUpdateComment(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'trip_id' => 'required|exists:trips,id',
             'user_id' => 'required|exists:users,id',
             'content' => 'required|string|max:1000',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation errors',
                 'errors' => $validator->errors(),
             ], 422);
         }
-
+    
         try {
-            $comment = Comments::create([
-                'trip_id' => $request->trip_id,
-                'user_id' => $request->user_id,
-                'content' => $request->content,
-            ]);
-
-            return response()->json([
-                'message' => 'Comment added successfully',
-                'comment' => $comment,
-            ], 200);
+            $comment = Comments::where('trip_id', $request->trip_id)
+                ->where('user_id', $request->user_id)
+                ->first();
+    
+            if ($comment) {
+                $comment->content = $request->content;
+                $comment->save();
+    
+                return response()->json([
+                    'message' => 'Comment updated successfully',
+                    'comment' => $comment,
+                ], 200);
+            } else {
+                $comment = Comments::create([
+                    'trip_id' => $request->trip_id,
+                    'user_id' => $request->user_id,
+                    'content' => $request->content,
+                ]);
+    
+                return response()->json([
+                    'message' => 'Comment added successfully',
+                    'comment' => $comment,
+                ], 200);
+            }
         } catch (QueryException $qe) {
             return response()->json([
-                'message' => 'Failed to add comment',
+                'message' => 'Failed to process comment',
                 'error' => $qe->getMessage(),
             ], 500);
         } catch (Exception $e) {
@@ -66,5 +80,5 @@ class CommentController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }
+    }    
 }
