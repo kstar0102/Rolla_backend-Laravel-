@@ -36,7 +36,7 @@
             <img src="/assets/img/logo.png" height="20" width="20" alt="Volt Logo">
           </span>
           <span class="mt-1 ms-1 sidebar-text">
-            Kenoride Admin
+            Rolla Travel Admin
           </span>
         </a>
       </li>
