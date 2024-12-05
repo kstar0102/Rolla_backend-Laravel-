@@ -34,7 +34,6 @@ class AuthController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|max:255|unique:users,email',
-            'country' => 'required|string|max:255',
             'password' => 'required|string|min:6',
             'rolla_username' => 'required|string|max:255|unique:users,rolla_username',
             'hear_rolla' => 'required|string|max:100'
@@ -50,7 +49,6 @@ class AuthController extends Controller
                 'last_name' => $request->last_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'country' => $request->country,
                 'rolla_username' => $request->rolla_username,
                 'hear_rolla' => $request->hear_rolla ?? 0,
             ]);
