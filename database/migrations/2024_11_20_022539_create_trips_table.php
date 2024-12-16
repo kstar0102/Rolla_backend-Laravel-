@@ -21,6 +21,7 @@ return new class extends Migration
             $table->timestamp('trip_end_date')->nullable();
             $table->string('trip_miles');
             $table->string('trip_sound');
+            $table->json('trip_coordinates')->nullable();
             $table->timestamps();
         });
     }

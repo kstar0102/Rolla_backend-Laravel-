@@ -19,7 +19,12 @@ class Trip extends Model
         'trip_end_date',
         'trip_miles',
         'trip_sound',
-        'trip_caption'
+        'trip_caption',
+        'trip_coordinates',
+    ];
+
+    protected $casts = [
+        'trip_coordinates' => 'array',
     ];
 
     public function droppins()

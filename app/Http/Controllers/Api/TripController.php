@@ -41,6 +41,9 @@ class TripController extends Controller
             'trip_miles' => 'nullable|string',
             'trip_sound' => 'nullable|string',
             'trip_caption' => 'nullable|string',
+            'trip_coordinates' => 'required|array',
+            'trip_coordinates.*.latitude' => 'required|numeric',
+            'trip_coordinates.*.longitude' => 'required|numeric',
             'droppins' => 'nullable|array',
             'droppins.*.stop_index' => 'nullable|integer',
             'droppins.*.image_path' => 'required|string',
@@ -66,7 +69,8 @@ class TripController extends Controller
                 'trip_end_date' => $request->trip_end_date ? Carbon::parse($request->trip_end_date) : null,
                 'trip_miles' => $request->trip_miles,
                 'trip_sound' => $request->trip_sound,
-                'trip_caption' => $request->trip_caption
+                'trip_caption' => $request->trip_caption,
+                'trip_coordinates' => $request->trip_coordinates,
             ]);
     
             if ($request->has('droppins') && is_array($request->droppins)) {
