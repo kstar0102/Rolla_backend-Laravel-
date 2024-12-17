@@ -14,6 +14,7 @@ class Trip extends Model
         'user_id',
         'start_address',
         'stop_address',
+        'stop_locations',
         'destination_address',
         'trip_start_date',
         'trip_end_date',
@@ -25,6 +26,7 @@ class Trip extends Model
 
     protected $casts = [
         'trip_coordinates' => 'array',
+        'stop_locations' => 'array',
     ];
 
     public function droppins()

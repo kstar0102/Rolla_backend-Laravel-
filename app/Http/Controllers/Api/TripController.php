@@ -44,6 +44,9 @@ class TripController extends Controller
             'trip_coordinates' => 'required|array',
             'trip_coordinates.*.latitude' => 'required|numeric',
             'trip_coordinates.*.longitude' => 'required|numeric',
+            'stop_locations' => 'required|array',
+            'stop_locations.*.latitude' => 'required|numeric',
+            'stop_locations.*.longitude' => 'required|numeric',
             'droppins' => 'nullable|array',
             'droppins.*.stop_index' => 'nullable|integer',
             'droppins.*.image_path' => 'required|string',
@@ -71,6 +74,7 @@ class TripController extends Controller
                 'trip_sound' => $request->trip_sound,
                 'trip_caption' => $request->trip_caption,
                 'trip_coordinates' => $request->trip_coordinates,
+                'stop_locations' => $request->stop_locations,
             ]);
     
             if ($request->has('droppins') && is_array($request->droppins)) {

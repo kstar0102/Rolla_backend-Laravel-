@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('trip_miles');
             $table->string('trip_sound');
             $table->json('trip_coordinates')->nullable();
+            $table->json('stop_locations')->nullable();
             $table->timestamps();
         });
     }
