@@ -39,6 +39,7 @@ Route::group(['prefix' => 'user'], static function () {
 Route::group(['prefix' => 'trip'], static function () {
     Route::get('data', [TripController::class, 'getAllTrips']);
     Route::post('create', [TripController::class, 'createTrip']);
+    Route::get('/trips/user', [TripController::class, 'getTripsByUserId']);
 });
 
 Route::group(['prefix' => 'comment'], static function () {
