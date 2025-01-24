@@ -16,6 +16,7 @@ class Trip extends Model
         'stop_address',
         'stop_locations',
         'destination_address',
+        'destination_text_address',
         'trip_start_date',
         'trip_end_date',
         'trip_miles',
