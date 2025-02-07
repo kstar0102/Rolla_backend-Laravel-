@@ -270,7 +270,7 @@ class TripController extends Controller
             'start_address' => 'required|string|max:255',
             'stop_address' => 'nullable|string|max:255',
             'destination_address' => 'required|string|max:255',
-            'destination_text_address' => 'required|string',
+            'destination_text_address' => 'required|string|max:1000',
             'trip_start_date' => 'required|date',
             'trip_end_date' => 'nullable|date|after_or_equal:trip_start_date',
             'trip_miles' => 'nullable|string',
