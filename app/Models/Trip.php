@@ -23,6 +23,8 @@ class Trip extends Model
         'trip_sound',
         'trip_caption',
         'trip_coordinates',
+        'start_location',
+        'destination_location',
     ];
 
     protected $casts = [
