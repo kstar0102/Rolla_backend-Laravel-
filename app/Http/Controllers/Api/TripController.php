@@ -291,6 +291,8 @@ class TripController extends Controller
             'droppins.*.stop_index' => 'nullable|integer',
             'droppins.*.image_path' => 'required|string',
             'droppins.*.image_caption' => 'required|string',
+            'start_location' => 'nullable|string',
+            'destination_location' => 'nullable|string',
         ]);
     
         if ($validator->fails()) {
