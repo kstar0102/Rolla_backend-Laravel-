@@ -27,20 +27,38 @@ class TripController extends Controller
     public function getDroppins()
     {
         try {
-            $drippins = Droppin::all();
+            // $droppins = Droppin::with('trip.user:id,photo,rolla_username,first_name,last_name')->get();
     
+            $droppins = Droppin::with(['trip.user:id,photo,rolla_username,first_name,last_name'])->get();
+
+            $droppins->transform(function ($droppin) {
+                if ($droppin->trip && $droppin->trip->user) {
+                    $droppin->user = [
+                        'id' => $droppin->trip->user->id,
+                        'photo' => $droppin->trip->user->photo,
+                        'rolla_username' => $droppin->trip->user->rolla_username,
+                        'first_name' => $droppin->trip->user->first_name,
+                        'last_name' => $droppin->trip->user->last_name,
+                    ];
+                    unset($droppin->trip);
+                } else {
+                    $droppin->user = null;
+                }
+                return $droppin;
+            });
             return response()->json([
                 'status' => 'success',
-                'data' => $drippins,
+                'data' => $droppins,
             ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to fetch car types.',
+                'message' => 'Failed to fetch droppins.',
                 'error' => $e->getMessage(),
             ], 500);
         }
     }
+    
 
     public function createTrip(Request $request)
     {

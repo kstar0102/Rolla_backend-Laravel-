@@ -23,4 +23,9 @@ class Droppin extends Model
         return $this->belongsToMany(User::class, 'users', 'id', 'id')
             ->whereRaw("FIND_IN_SET(users.id, droppins.likes_user_id)");
     }
+
+    public function trip()
+    {
+        return $this->belongsTo(Trip::class);
+    }
 }
