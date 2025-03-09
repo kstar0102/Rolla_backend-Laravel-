@@ -24,6 +24,24 @@ class TripController extends Controller
     {
     }
 
+    public function getDroppins()
+    {
+        try {
+            $drippins = Droppin::all();
+    
+            return response()->json([
+                'status' => 'success',
+                'data' => $drippins,
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch car types.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function createTrip(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -159,7 +177,7 @@ class TripController extends Controller
                     $likedUsers = User::whereIn('id', $userIds)
                         ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
                         ->get();
-    
+
                     $droppin->liked_users = $likedUsers;
     
                     return $droppin;

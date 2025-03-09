@@ -43,6 +43,11 @@ Route::group(['prefix' => 'trip'], static function () {
     Route::post('update', [TripController::class, 'updateTrip']); // Update a trip by ID
 });
 
+// Droppin routes
+Route::group(['prefix' => 'droppin'], static function () {
+    Route::get('data', [TripController::class, 'getDroppins']);
+});
+
 Route::group(['prefix' => 'comment'], static function () {
     Route::post('create', [CommentController::class, 'createOrUpdateComment']);
 });
