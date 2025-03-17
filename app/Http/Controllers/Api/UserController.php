@@ -9,6 +9,41 @@ use App\Models\Droppin;
 
 class UserController extends Controller
 {
+
+        /**
+     * Get user information.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function getAllUsers(Request $request)
+    {
+        try {
+            $users = User::all();
+
+            if ($users) {
+                $response = [
+                    'statusCode' => true,
+                    'message' => "success",
+                    'data' => $users,
+                ];
+                return response()->json($response, 200);
+            } else {
+                $response = [
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ];
+                return response()->json($response, 404);
+            }
+        } catch (\Exception $e) {
+            $response = [
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ];
+            return response()->json($response, 500);
+        }
+    }
+
     /**
      * Get user information.
      *

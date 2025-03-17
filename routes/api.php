@@ -29,6 +29,7 @@ Route::group(['prefix' => 'auth'], static function () {
 // User routes
 Route::group(['prefix' => 'user'], static function () {
     Route::get('info', [UserController::class, 'getUserInfo']);
+    Route::get('all', [UserController::class, 'getAllUsers']);
     Route::put('update', [UserController::class, 'updateUserInfo']);
     Route::get('following_users', [UserController::class, 'getFollowingUsers']);
     Route::post('droppin_like', [UserController::class, 'droppinLike']);
