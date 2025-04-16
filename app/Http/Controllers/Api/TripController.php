@@ -229,6 +229,77 @@ class TripController extends Controller
         }
     }
 
+    public function getTripsByTripId(Request $request)
+    {
+        try {
+            $tripId = $request->input('trip_id');  // Only filter by trip_id
+
+            if (empty($tripId)) {
+                return response()->json([
+                    'message' => 'Trip ID is required',
+                ], 400);
+            }
+
+            $trips = Trip::with([
+                'user:id,photo,rolla_username,first_name,last_name',
+                'droppins',
+                'comments.user:id,photo,rolla_username,first_name,last_name',
+            ])
+            ->where('id', $tripId)  // Filter by trip_id
+            ->get();
+
+            $trips->transform(function ($trip) {
+                $trip->user = $trip->user ? [
+                    'id' => $trip->user->id,
+                    'photo' => $trip->user->photo,
+                    'rolla_username' => $trip->user->rolla_username,
+                    'first_name' => $trip->user->first_name,
+                    'last_name' => $trip->user->last_name,
+                ] : null;
+
+                $trip->droppins->transform(function ($droppin) {
+                    $userIds = collect(explode(',', $droppin->likes_user_id))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)))
+                        ->unique();
+
+                    $likedUsers = User::whereIn('id', $userIds)
+                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                        ->get();
+
+                    $droppin->liked_users = $likedUsers;
+
+                    return $droppin;
+                });
+
+                $trip->comments->transform(function ($comment) {
+                    if ($comment->user) {
+                        $comment->user = [
+                            'id' => $comment->user->id,
+                            'photo' => $comment->user->photo,
+                            'rolla_username' => $comment->user->rolla_username,
+                            'first_name' => $comment->user->first_name,
+                            'last_name' => $comment->user->last_name,
+                        ];
+                    }
+                    return $comment;
+                });
+
+                return $trip;
+            });
+
+            return response()->json([
+                'message' => 'Trip retrieved successfully',
+                'trips' => $trips,
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while fetching the trip',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function getTripsByUserId(Request $request)
     {
         try {
