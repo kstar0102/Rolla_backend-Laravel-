@@ -155,7 +155,7 @@ class TripController extends Controller
             $destination = $request->input('destination');
 
             $tripsQuery = Trip::with([
-                'user:id,photo,rolla_username,first_name,last_name',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ]);
@@ -241,7 +241,7 @@ class TripController extends Controller
             }
 
             $trips = Trip::with([
-                'user:id,photo,rolla_username,first_name,last_name',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])
@@ -312,7 +312,7 @@ class TripController extends Controller
             }
 
             $trips = Trip::with([
-                'user:id,photo,rolla_username,first_name,last_name',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])
