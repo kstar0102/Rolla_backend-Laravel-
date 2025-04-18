@@ -185,6 +185,55 @@ class UserController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
      */
+    public function followingUser(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'following_id' => 'required|integer|exists:users,id',
+            ]);
+    
+            $user = User::find($validated['user_id']);
+    
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $likes = $user->following_user_id ? explode(',', $user->following_user_id) : [];
+            
+            $flag = false;
+            if (!in_array($validated['following_id'], $likes)) {
+                $likes[] = $validated['following_id'];
+                $flag = true;
+            } else if (in_array($validated['following_id'], $likes)) {
+                $likes = array_diff($likes, [$validated['following_id']]);
+            }
+            
+            $user->following_user_id = implode(',', $likes);
+            $user->save();
+    
+            return response()->json([
+                'statusCode' => true,
+                'message' => $flag ? "User following successfully" : "User unfollowing successfully",
+                'data' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Add a like to a droppin by a user.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
+     */
     public function droppinLike(Request $request)
     {
         try {

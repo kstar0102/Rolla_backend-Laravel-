@@ -33,6 +33,7 @@ Route::group(['prefix' => 'user'], static function () {
     Route::put('update', [UserController::class, 'updateUserInfo']);
     Route::get('following_users', [UserController::class, 'getFollowingUsers']);
     Route::post('droppin_like', [UserController::class, 'droppinLike']);
+    Route::post('following', [UserController::class, 'followingUser']);
     Route::delete('delete', [UserController::class, 'deleteUserAccount']);
 });
 

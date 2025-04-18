@@ -433,6 +433,8 @@ class TripController extends Controller
                 'trip_caption' => $request->trip_caption,
                 'trip_coordinates' => $request->trip_coordinates,
                 'stop_locations' => $request->stop_locations,
+                'start_location' => $request->start_location,
+                'destination_location' => $request->destination_location
             ]);
 
             if ($request->has('droppins') && is_array($request->droppins)) {
