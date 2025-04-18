@@ -15,7 +15,8 @@ class Droppin extends Model
         'stop_index',
         'image_path',
         'image_caption',
-        'likes_user_id'
+        'likes_user_id',
+        'view_count'
     ];
 
     public function likedUsers()
