@@ -312,7 +312,7 @@ class TripController extends Controller
             }
 
             $trips = Trip::with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,happy_place,garage',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])
@@ -326,8 +326,11 @@ class TripController extends Controller
                     'rolla_username' => $trip->user->rolla_username,
                     'first_name' => $trip->user->first_name,
                     'last_name' => $trip->user->last_name,
+                    'following_user_id' => $trip->user->following_user_id,
+                    'happy_place' => $trip->user->happy_place,
+                    'garage' => $trip->user->garage_raw
                 ] : null;
-
+            
                 $trip->droppins->transform(function ($droppin) {
                     $userIds = collect(explode(',', $droppin->likes_user_id))
                         ->filter()

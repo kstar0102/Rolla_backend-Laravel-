@@ -10,6 +10,8 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     use HasFactory, HasApiTokens;
+    protected $appends = ['garage'];
+    protected $hidden = ['garage_raw']; 
 
     protected $fillable = [
         'first_name',
@@ -47,6 +49,24 @@ class User extends Authenticatable
     public function getGarageDetails()
     {
         $garageIds = collect(explode(',', $this->garage))
+            ->filter()
+            ->map(fn($id) => intval(trim($id)))
+            ->unique();
+
+        return CarType::whereIn('id', $garageIds)
+            ->select('id', 'car_type', 'logo_path')
+            ->get();
+    }
+
+    // In User.php
+    public function getGarageRawAttribute()
+    {
+        return $this->attributes['garage'] ?? '';
+    }
+
+    public function getGarageAttribute()
+    {
+        $garageIds = collect(explode(',', $this->attributes['garage'] ?? ''))
             ->filter()
             ->map(fn($id) => intval(trim($id)))
             ->unique();
