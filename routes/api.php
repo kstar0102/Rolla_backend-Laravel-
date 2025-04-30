@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\CarTypeController;
+use App\Http\Controllers\Api\ImageUploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +59,8 @@ Route::group(['prefix' => 'comment'], static function () {
 
 
 Route::get('car_types', [CarTypeController::class, 'getCarTypes']);
+
+Route::post('/upload-image', [ImageUploadController::class, 'upload']);
 
 // Catch-all route for unknown endpoints
 Route::fallback(function () {

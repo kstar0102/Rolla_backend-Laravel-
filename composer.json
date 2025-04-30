@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "aws/aws-sdk-php": "*",
         "beyondcode/laravel-websockets": "^1.14",
         "guzzlehttp/guzzle": "^7.4",
         "kreait/laravel-firebase": "^5.9",
