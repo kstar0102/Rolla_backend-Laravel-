@@ -311,6 +311,10 @@ class TripController extends Controller
                 ], 400);
             }
 
+            $userInfo = User::where('id', $userId)
+                            ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name', 'following_user_id', 'happy_place', 'garage')
+                            ->get();
+
             $trips = Trip::with([
                 'user:id,photo,rolla_username,first_name,last_name,following_user_id,happy_place,garage',
                 'droppins',
@@ -365,6 +369,7 @@ class TripController extends Controller
             return response()->json([
                 'message' => 'Trips retrieved successfully',
                 'trips' => $trips,
+                'userInfo' => $userInfo
             ], 200);
         } catch (Exception $e) {
             return response()->json([
