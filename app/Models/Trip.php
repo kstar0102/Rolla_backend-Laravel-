@@ -21,6 +21,7 @@ class Trip extends Model
         'trip_end_date',
         'trip_miles',
         'trip_sound',
+        'trip_tags',
         'trip_caption',
         'trip_coordinates',
         'start_location',
