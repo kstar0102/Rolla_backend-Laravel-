@@ -180,6 +180,55 @@ class UserController extends Controller
     }
 
     /**
+     * Block User
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function blockUser(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'block_id' => 'required|integer|exists:users,id',
+            ]);
+    
+            $user = User::find($validated['user_id']);
+    
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $blockList = $user->block_users ? explode(',', $user->block_users) : [];
+            
+            $flag = false;
+            if (!in_array($validated['block_id'], $blockList)) {
+                $blockList[] = $validated['block_id'];
+                $flag = true;
+            } else if (in_array($validated['block_id'], $blockList)) {
+                $blockList = array_diff($blockList, [$validated['block_id']]);
+            }
+            
+            $user->block_users = implode(',', $blockList);
+            $user->save();
+    
+            return response()->json([
+                'statusCode' => true,
+                'message' => $flag ? "User Block successfully" : "User Unblock successfully",
+                'data' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Add a like to a droppin by a user.
      *
      * @param Request $request
