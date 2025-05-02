@@ -157,7 +157,7 @@ class TripController extends Controller
             $destination = $request->input('destination');
 
             $tripsQuery = Trip::with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ]);
@@ -243,7 +243,7 @@ class TripController extends Controller
             }
 
             $trips = Trip::with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])
@@ -314,11 +314,11 @@ class TripController extends Controller
             }
 
             $userInfo = User::where('id', $userId)
-                            ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name', 'following_user_id', 'happy_place', 'garage')
+                            ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name', 'following_user_id', 'block_users', 'happy_place', 'garage')
                             ->get();
 
             $trips = Trip::with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id,happy_place,garage',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users,happy_place,garage',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])
@@ -333,6 +333,7 @@ class TripController extends Controller
                     'first_name' => $trip->user->first_name,
                     'last_name' => $trip->user->last_name,
                     'following_user_id' => $trip->user->following_user_id,
+                    'block_users' => $trip->user->block_users,
                     'happy_place' => $trip->user->happy_place,
                     'garage' => $trip->user->garage_raw
                 ] : null;
