@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Droppin;
+use App\Models\Trip;
 
 class UserController extends Controller
 {
@@ -263,6 +264,58 @@ class UserController extends Controller
                 'statusCode' => true,
                 'message' => "Users found successfully",
                 'data' => $usersFollowing,
+            ], 200);
+    
+            return response()->json([
+                'statusCode' => true,
+                'message' => $flag ? "User following successfully" : "User unfollowing successfully",
+                'data' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Add a like to a droppin by a user.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function followedUserTrips(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+    
+            $user = User::find($validated['user_id']);
+    
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
+
+            if ($usersFollowing->isEmpty()) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "No users following this user",
+                ], 404);
+            }
+
+            $tripData = Trip::whereIn('user_id', $usersFollowing->pluck('id'))->with('droppins', 'comments')->get();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Users found successfully",
+                'data' => $tripData,
             ], 200);
     
             return response()->json([
