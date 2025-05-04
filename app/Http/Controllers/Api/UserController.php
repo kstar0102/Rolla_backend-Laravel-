@@ -302,15 +302,17 @@ class UserController extends Controller
             }
 
             $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
-
-            if ($usersFollowing->isEmpty()) {
+            
+            $usersIncludingRequest = $usersFollowing->push($user);
+            
+            if ($usersIncludingRequest->isEmpty()) {
                 return response()->json([
                     'statusCode' => false,
                     'message' => "No users following this user",
                 ], 404);
             }
 
-            $tripData = Trip::whereIn('user_id', $usersFollowing->pluck('id'))->with([
+            $tripData = Trip::whereIn('user_id', $usersIncludingRequest->pluck('id'))->with([
                 'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
@@ -337,12 +339,6 @@ class UserController extends Controller
                 'statusCode' => true,
                 'message' => "Users found successfully",
                 'data' => $tripData,
-            ], 200);
-    
-            return response()->json([
-                'statusCode' => true,
-                'message' => $flag ? "User following successfully" : "User unfollowing successfully",
-                'data' => $user,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
