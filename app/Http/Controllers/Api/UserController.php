@@ -310,7 +310,28 @@ class UserController extends Controller
                 ], 404);
             }
 
-            $tripData = Trip::whereIn('user_id', $usersFollowing->pluck('id'))->with('droppins', 'comments')->get();
+            $tripData = Trip::whereIn('user_id', $usersFollowing->pluck('id'))->with([
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
+                'droppins',
+                'comments.user:id,photo,rolla_username,first_name,last_name',
+            ])->get();
+
+            $tripData->each(function ($trip) {
+                $trip->droppins->transform(function ($droppin) {
+                    $userIds = collect(explode(',', $droppin->likes_user_id))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)))
+                        ->unique();
+    
+                    $likedUsers = User::whereIn('id', $userIds)
+                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                        ->get();
+    
+                    $droppin->liked_users = $likedUsers;
+    
+                    return $droppin;
+                });
+            });
 
             return response()->json([
                 'statusCode' => true,

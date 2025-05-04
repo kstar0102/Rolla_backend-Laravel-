@@ -188,7 +188,6 @@ class TripController extends Controller
                 ] : null;
     
                 $trip->droppins->transform(function ($droppin) {
-                    // Parse likes_user_id and fetch user details
                     $userIds = collect(explode(',', $droppin->likes_user_id))
                         ->filter()
                         ->map(fn($id) => intval(trim($id)))
