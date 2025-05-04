@@ -214,7 +214,17 @@ class TripController extends Controller
                     }
                     return $comment;
                 });
-    
+
+                $mutedIds = collect(explode(',', $trip->muted_ids))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)))
+                        ->unique();
+                
+                $mutedUsers = User::whereIn('id', $mutedIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get();
+            
+                $trip->muted_users = $mutedUsers;
                 return $trip;
             });
     
@@ -286,6 +296,17 @@ class TripController extends Controller
                     return $comment;
                 });
 
+                $mutedIds = collect(explode(',', $trip->muted_ids))
+                    ->filter()
+                    ->map(fn($id) => intval(trim($id)))
+                    ->unique();
+            
+                $mutedUsers = User::whereIn('id', $mutedIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get();
+            
+                $trip->muted_users = $mutedUsers;
+
                 return $trip;
             });
 
@@ -297,6 +318,49 @@ class TripController extends Controller
             return response()->json([
                 'message' => 'An error occurred while fetching the trip',
                 'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function mutedUser(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'trip_id' => 'required|integer|exists:trips,id',
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+    
+            $trip = Trip::find($validated['trip_id']);
+    
+            if (!$trip) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "Trip not found",
+                ], 404);
+            }
+
+            $mutedUsers = $trip->muted_ids ? explode(',', $trip->muted_ids) : [];
+            
+            $flag = false;
+            if (!in_array($validated['user_id'], $mutedUsers)) {
+                $mutedUsers[] = $validated['user_id'];
+                $flag = true;
+            } else if (in_array($validated['user_id'], $mutedUsers)) {
+                $mutedUsers = array_diff($mutedUsers, [$validated['user_id']]);
+            }
+            
+            $trip->muted_ids = implode(',', $mutedUsers);
+            $trip->save();
+    
+            return response()->json([
+                'statusCode' => true,
+                'message' => $flag ? "User muted successfully" : "User unmuted successfully",
+                'data' => $trip,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -364,6 +428,17 @@ class TripController extends Controller
                     }
                     return $comment;
                 });
+
+                $mutedIds = collect(explode(',', $trip->muted_ids))
+                    ->filter()
+                    ->map(fn($id) => intval(trim($id)))
+                    ->unique();
+            
+                $mutedUsers = User::whereIn('id', $mutedIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get();
+            
+                $trip->muted_users = $mutedUsers;
 
                 return $trip;
             });

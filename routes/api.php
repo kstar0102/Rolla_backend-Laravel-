@@ -45,6 +45,7 @@ Route::group(['prefix' => 'user'], static function () {
 Route::group(['prefix' => 'trip'], static function () {
     Route::get('data', [TripController::class, 'getAllTrips']);
     Route::post('create', [TripController::class, 'createTrip']);
+    Route::post('mute_user', [TripController::class, 'mutedUser']);
     Route::get('/trips/id', [TripController::class, 'getTripsByTripId']);
     Route::get('/trips/user', [TripController::class, 'getTripsByUserId']);
     Route::post('update', [TripController::class, 'updateTrip']); // Update a trip by ID
