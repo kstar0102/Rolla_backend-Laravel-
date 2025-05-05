@@ -34,6 +34,8 @@ Route::group(['prefix' => 'user'], static function () {
     Route::put('update', [UserController::class, 'updateUserInfo']);
     Route::get('following_users', [UserController::class, 'getFollowingUsers']);
     Route::get('follwed_user/trips', [UserController::class, 'followedUserTrips']);
+    Route::get('block_users', [UserController::class, 'getBlockUsers']);
+    Route::get('block_user/trips', [UserController::class, 'getBlockUserTrips']);
     Route::post('droppin_like', [UserController::class, 'droppinLike']);
     Route::post('following', [UserController::class, 'followingUser']);;
     Route::get('followed_users', [UserController::class, 'followedUsers']);
@@ -60,7 +62,6 @@ Route::group(['prefix' => 'droppin'], static function () {
 Route::group(['prefix' => 'comment'], static function () {
     Route::post('create', [CommentController::class, 'createOrUpdateComment']);
 });
-
 
 Route::get('car_types', [CarTypeController::class, 'getCarTypes']);
 

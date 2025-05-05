@@ -230,6 +230,119 @@ class UserController extends Controller
     }
 
     /**
+     * Get Block Users.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function getBlockUsers(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+    
+            $user = User::find($validated['user_id']);
+    
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $blockUsers = User::whereRaw("FIND_IN_SET(?, block_users)", [$validated['user_id']])->get();
+
+            if ($blockUsers->isEmpty()) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "No users block this user",
+                ], 404);
+            }
+    
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Users found successfully",
+                'data' => $blockUsers,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Add a like to a droppin by a user.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function getBlockUserTrips(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+    
+            $user = User::find($validated['user_id']);
+    
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $blockUsers = User::whereRaw("FIND_IN_SET(?, block_users)", [$validated['user_id']])->get();
+            
+            $usersIncludingRequest = $blockUsers->push($user);
+            
+            if ($usersIncludingRequest->isEmpty()) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "No users following this user",
+                ], 404);
+            }
+
+            $tripData = Trip::whereIn('user_id', $usersIncludingRequest->pluck('id'))->with([
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
+                'droppins',
+                'comments.user:id,photo,rolla_username,first_name,last_name',
+            ])->get();
+
+            $tripData->each(function ($trip) {
+                $trip->droppins->transform(function ($droppin) {
+                    $userIds = collect(explode(',', $droppin->likes_user_id))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)))
+                        ->unique();
+    
+                    $likedUsers = User::whereIn('id', $userIds)
+                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                        ->get();
+    
+                    $droppin->liked_users = $likedUsers;
+    
+                    return $droppin;
+                });
+            });
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Users found successfully",
+                'data' => $tripData,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Add a like to a droppin by a user.
      *
      * @param Request $request
