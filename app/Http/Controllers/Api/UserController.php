@@ -251,12 +251,16 @@ class UserController extends Controller
                 ], 404);
             }
 
-            $blockUsers = User::whereRaw("FIND_IN_SET(?, block_users)", [$validated['user_id']])->get();
+            $blockUserIds = $user->block_users ? explode(',', $user->block_users) : [];
 
+            $blockUsers = User::whereIn('id', $blockUserIds)
+                                ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                                ->get();
+            
             if ($blockUsers->isEmpty()) {
                 return response()->json([
                     'statusCode' => false,
-                    'message' => "No users block this user",
+                    'message' => "No blocked users",
                 ], 404);
             }
     
