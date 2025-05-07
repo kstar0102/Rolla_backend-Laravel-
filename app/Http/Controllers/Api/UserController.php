@@ -204,10 +204,15 @@ class UserController extends Controller
             }
 
             $blockList = $user->block_users ? explode(',', $user->block_users) : [];
+            $followingList = $user->following_user_id ? explode(',', $user->following_user_id) : [];
             
             $flag = false;
             if (!in_array($validated['block_id'], $blockList)) {
                 $blockList[] = $validated['block_id'];
+                if (in_array($validated['block_id'], $followingList)) {
+                    $followingList = array_diff($followingList, [$validated['block_id']]);
+                    $user->following_user_id = implode(',', $followingList);
+                }
                 $flag = true;
             } else if (in_array($validated['block_id'], $blockList)) {
                 $blockList = array_diff($blockList, [$validated['block_id']]);
