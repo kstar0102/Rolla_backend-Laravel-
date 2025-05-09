@@ -565,6 +565,40 @@ class TripController extends Controller
             ], 500);
         }
     }
+
+    public function removeTrip(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'trip_id' => 'required|integer|exists:trips,id',
+            ]);
+
+            $trip = Trip::find($validated['trip_id']);
+    
+            if (!$trip) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "Trip not found",
+                ], 404);
+            }
+
+            if ($trip->droppins()->exists()) {
+                $trip->droppins()->delete();
+            }
+
+            $trip->delete();
+    
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Trip removed successfully",
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }    
     
     public function droppinViewed(Request $request)
     {

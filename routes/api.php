@@ -50,7 +50,8 @@ Route::group(['prefix' => 'trip'], static function () {
     Route::post('mute_user', [TripController::class, 'mutedUser']);
     Route::get('/trips/id', [TripController::class, 'getTripsByTripId']);
     Route::get('/trips/user', [TripController::class, 'getTripsByUserId']);
-    Route::post('update', [TripController::class, 'updateTrip']); // Update a trip by ID
+    Route::post('update', [TripController::class, 'updateTrip']);
+    Route::post('delete', [TripController::class, 'removeTrip']);
 });
 
 // Droppin routes
