@@ -69,7 +69,8 @@ class TripController extends Controller
             'destination_address' => 'required|string|max:255',
             'destination_text_address' => 'required|string',
             'trip_start_date' => 'required|date',
-            'trip_end_date' => 'nullable|date|after_or_equal:trip_start_date',
+            // 'trip_end_date' => 'nullable|date|after_or_equal:trip_start_date',
+            'trip_end_date' => 'nullable|date',
             'trip_miles' => 'nullable|string',
             'trip_sound' => 'nullable|string',
             'trip_caption' => 'nullable|string',
@@ -587,7 +588,7 @@ class TripController extends Controller
             }
 
             $trip->delete();
-    
+
             return response()->json([
                 'statusCode' => true,
                 'message' => "Trip removed successfully",

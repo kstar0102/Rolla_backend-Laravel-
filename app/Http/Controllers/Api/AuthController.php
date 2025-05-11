@@ -112,7 +112,14 @@ class AuthController extends Controller
                             return $sum + $miles;
                         }, 0);
                     $tripMilesSum = number_format($tripMilesSum, 1, '.', '');
-    
+
+                    $trips = Trip::where('user_id', $user->id)
+                                    ->where(function ($query) {
+                                        $query->where('trip_end_date', '>=', now())
+                                            ->orWhereNull('trip_end_date');
+                                    })
+                                    ->get();
+
                     $droppins = Droppin::whereIn(
                             'trip_id',
                             Trip::where('user_id', $user->id)->pluck('id')
@@ -147,6 +154,7 @@ class AuthController extends Controller
                         'token' => $token,
                         'userData' => $user,
                         'trip_miles_sum' => $tripMilesSum,
+                        'trips' => $trips,
                         'droppins' => $droppins,
                         'total_trips' => $totalTrips,
                         'following_users' => $followingUsers,
