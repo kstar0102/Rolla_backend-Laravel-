@@ -114,11 +114,12 @@ class AuthController extends Controller
                     $tripMilesSum = number_format($tripMilesSum, 1, '.', '');
 
                     $trips = Trip::where('user_id', $user->id)
-                                    ->where(function ($query) {
-                                        $query->where('trip_end_date', '>=', now())
-                                            ->orWhereNull('trip_end_date');
-                                    })
-                                    ->get();
+                                        ->where(function ($query) {
+                                            $query->where('trip_end_date', '>=', now())
+                                                ->orWhereNull('trip_end_date');
+                                        })
+                                        ->pluck('id')
+                                        ->toArray();
 
                     $droppins = Droppin::whereIn(
                             'trip_id',
