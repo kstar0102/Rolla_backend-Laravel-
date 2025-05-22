@@ -380,7 +380,7 @@ class TripController extends Controller
             }
 
             $userInfo = User::where('id', $userId)
-                            ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name', 'following_user_id', 'block_users', 'happy_place', 'garage')
+                            ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name', 'bio', 'following_user_id', 'block_users', 'happy_place', 'garage')
                             ->get();
 
             $trips = Trip::with([
