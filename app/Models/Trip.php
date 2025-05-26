@@ -27,6 +27,7 @@ class Trip extends Model
         'start_location',
         'destination_location',
         'map_style',
+        'delay_time',
     ];
 
     protected $casts = [

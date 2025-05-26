@@ -87,7 +87,8 @@ class TripController extends Controller
             'droppins.*.image_caption' => 'required|string',
             'start_location' => 'nullable|string',
             'destination_location' => 'nullable|string',
-            'map_style' => 'nullable|string'
+            'map_style' => 'nullable|string',
+            'delay_time' => 'nullable|date'
         ]);
     
         if ($validator->fails()) {
@@ -117,6 +118,7 @@ class TripController extends Controller
                 'start_location' => $request->start_location,
                 'destination_location' => $request->destination_location,
                 'map_style' => $request->map_style,
+                'delay_time' => $request->delay_time,
             ]);
     
             if ($request->has('droppins') && is_array($request->droppins)) {
@@ -489,7 +491,8 @@ class TripController extends Controller
             'droppins.*.image_caption' => 'required|string',
             'start_location' => 'nullable|string',
             'destination_location' => 'nullable|string',
-            'map_style' => 'nullable|string'
+            'map_style' => 'nullable|string',
+            'delay_time' => 'nullable|date',
         ]);
     
         if ($validator->fails()) {
@@ -527,6 +530,7 @@ class TripController extends Controller
                 'start_location' => $request->start_location,
                 'destination_location' => $request->destination_location,
                 'map_style' => $request->map_style,
+                'delay_time' => $request->delay_time,
             ]);
 
             if ($request->has('droppins') && is_array($request->droppins)) {
