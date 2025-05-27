@@ -127,6 +127,7 @@ class TripController extends Controller
                         'stop_index' => $droppinData['stop_index'],
                         'image_path' => $droppinData['image_path'],
                         'image_caption' => $droppinData['image_caption'] ?? null,
+                        'deley_time' => $droppinData['delay_time'] ?? null,
                     ]);
                     $trip->droppins()->save($droppin);
                 }
@@ -542,6 +543,7 @@ class TripController extends Controller
                                 'stop_index' => $droppinData['stop_index'],
                                 'image_path' => $droppinData['image_path'],
                                 'image_caption' => $droppinData['image_caption'],
+                                'deley_time' => $droppinData['delay_time'],
                             ]);
                         }
                     } else {
@@ -549,6 +551,7 @@ class TripController extends Controller
                             'stop_index' => $droppinData['stop_index'],
                             'image_path' => $droppinData['image_path'],
                             'image_caption' => $droppinData['image_caption'],
+                            'deley_time' => $droppinData['delay_time'],
                         ]);
                     }
                 }
