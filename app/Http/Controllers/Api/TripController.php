@@ -534,28 +534,53 @@ class TripController extends Controller
                 'deley_time' => $request->delay_time,
             ]);
 
+            // if ($request->has('droppins') && is_array($request->droppins)) {
+            //     foreach ($request->droppins as $droppinData) {
+            //         if (!empty($droppinData['id'])) {
+            //             $droppin = Droppin::find($droppinData['id']);
+            //             if ($droppin) {
+            //                 $droppin->update([
+            //                     'stop_index' => $droppinData['stop_index'],
+            //                     'image_path' => $droppinData['image_path'],
+            //                     'image_caption' => $droppinData['image_caption'],
+            //                     'deley_time' => $droppinData['delay_time'],
+            //                 ]);
+            //             }
+            //         } else {
+            //             $trip->droppins()->create([
+            //                 'stop_index' => $droppinData['stop_index'],
+            //                 'image_path' => $droppinData['image_path'],
+            //                 'image_caption' => $droppinData['image_caption'],
+            //                 'deley_time' => $droppinData['delay_time'],
+            //             ]);
+            //         }
+            //     }
+            // }
+
             if ($request->has('droppins') && is_array($request->droppins)) {
                 foreach ($request->droppins as $droppinData) {
+                    $updateData = [
+                        'stop_index' => $droppinData['stop_index'],
+                        'image_path' => $droppinData['image_path'],
+                        'image_caption' => $droppinData['image_caption'],
+                    ];
+            
+                    // Only include 'deley_time' if it exists in the input
+                    if (!empty($droppinData['delay_time'])) {
+                        $updateData['deley_time'] = $droppinData['delay_time'];
+                    }
+            
                     if (!empty($droppinData['id'])) {
                         $droppin = Droppin::find($droppinData['id']);
                         if ($droppin) {
-                            $droppin->update([
-                                'stop_index' => $droppinData['stop_index'],
-                                'image_path' => $droppinData['image_path'],
-                                'image_caption' => $droppinData['image_caption'],
-                                'deley_time' => $droppinData['delay_time'],
-                            ]);
+                            $droppin->update($updateData);
                         }
                     } else {
-                        $trip->droppins()->create([
-                            'stop_index' => $droppinData['stop_index'],
-                            'image_path' => $droppinData['image_path'],
-                            'image_caption' => $droppinData['image_caption'],
-                            'deley_time' => $droppinData['delay_time'],
-                        ]);
+                        $trip->droppins()->create($updateData);
                     }
                 }
             }
+            
     
             DB::commit();
     
