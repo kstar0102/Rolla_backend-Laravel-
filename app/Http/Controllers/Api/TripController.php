@@ -118,7 +118,7 @@ class TripController extends Controller
                 'start_location' => $request->start_location,
                 'destination_location' => $request->destination_location,
                 'map_style' => $request->map_style,
-                'delay_time' => $request->delay_time,
+                'deley_time' => $request->delay_time,
             ]);
     
             if ($request->has('droppins') && is_array($request->droppins)) {
@@ -531,7 +531,7 @@ class TripController extends Controller
                 'start_location' => $request->start_location,
                 'destination_location' => $request->destination_location,
                 'map_style' => $request->map_style,
-                'delay_time' => $request->delay_time,
+                'deley_time' => $request->delay_time,
             ]);
 
             if ($request->has('droppins') && is_array($request->droppins)) {
