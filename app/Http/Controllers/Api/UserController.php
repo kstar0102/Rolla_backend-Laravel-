@@ -180,6 +180,49 @@ class UserController extends Controller
         }
     }
 
+
+    public function getPendingFollowingUsers(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if ($user) {
+                $followingIds = collect(explode(',', $user->following_pending_userid))
+                    ->filter()
+                    ->map(fn($id) => intval(trim($id)))
+                    ->unique()
+                    ->values();
+
+                $followingUsers = User::whereIn('id', $followingIds)
+                    ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
+                    ->get();
+
+                $response = [
+                    'statusCode' => true,
+                    'message' => "Following users retrieved successfully",
+                    'data' => $followingUsers,
+                ];
+                return response()->json($response, 200);
+            } else {
+                $response = [
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ];
+                return response()->json($response, 404);
+            }
+        } catch (\Exception $e) {
+            $response = [
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ];
+            return response()->json($response, 500);
+        }
+    }
+
     /**
      * Block User
      *
@@ -518,6 +561,96 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    public function requestToFollowUser(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'following_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $pending = $user->following_pending_userid ? explode(',', $user->following_pending_userid) : [];
+
+            if (!in_array($validated['following_id'], $pending)) {
+                $pending[] = $validated['following_id'];
+                $user->following_pending_userid = implode(',', $pending);
+                $user->save();
+            }
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Follow request sent",
+                'data' => $user,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function acceptFollowRequest(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'follower_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            // Remove from pending
+            $pending = $user->following_pending_userid ? explode(',', $user->following_pending_userid) : [];
+            if (!in_array($validated['follower_id'], $pending)) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "No such follow request found",
+                ], 400);
+            }
+
+            $pending = array_diff($pending, [$validated['follower_id']]);
+            $user->following_pending_userid = implode(',', $pending);
+
+            // Add to following
+            $following = $user->following_user_id ? explode(',', $user->following_user_id) : [];
+            if (!in_array($validated['follower_id'], $following)) {
+                $following[] = $validated['follower_id'];
+            }
+            $user->following_user_id = implode(',', $following);
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Follow request accepted",
+                'data' => $user,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 
     /**
      * Add a like to a droppin by a user.
