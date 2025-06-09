@@ -579,18 +579,25 @@ class UserController extends Controller
                 ], 404);
             }
 
-            $pending = $user->following_pending_userid ? explode(',', $user->following_pending_userid) : [];
+            $pending = $user->following_pending_userid 
+                ? json_decode($user->following_pending_userid, true) 
+                : [];
 
-            if (!in_array($validated['following_id'], $pending)) {
-                $pending[] = $validated['following_id'];
-                $user->following_pending_userid = implode(',', $pending);
+            $alreadyRequested = collect($pending)->pluck('id')->contains($validated['following_id']);
+
+            if (!$alreadyRequested) {
+                $pending[] = [
+                    'id' => $validated['following_id'],
+                    'date' => now()->toDateTimeString(),
+                ];
+                $user->following_pending_userid = json_encode($pending);
                 $user->save();
             }
 
             return response()->json([
                 'statusCode' => true,
                 'message' => "Follow request sent",
-                'data' => $user,
+                'data' => $pending,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -601,7 +608,7 @@ class UserController extends Controller
     }
 
     public function acceptFollowRequest(Request $request)
-    {
+    {   
         try {
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
@@ -617,24 +624,37 @@ class UserController extends Controller
                 ], 404);
             }
 
-            // Remove from pending
-            $pending = $user->following_pending_userid ? explode(',', $user->following_pending_userid) : [];
-            if (!in_array($validated['follower_id'], $pending)) {
+            // Decode JSON from DB
+            $pending = json_decode($user->following_pending_userid, true) ?? [];
+
+            // Check if request exists
+            $exists = false;
+            $filtered = [];
+            foreach ($pending as $entry) {
+                if (isset($entry['id']) && $entry['id'] == $validated['follower_id']) {
+                    $exists = true;
+                    continue; // remove it
+                }
+                $filtered[] = $entry; // keep others
+            }
+
+            if (!$exists) {
                 return response()->json([
                     'statusCode' => false,
                     'message' => "No such follow request found",
                 ], 400);
             }
 
-            $pending = array_diff($pending, [$validated['follower_id']]);
-            $user->following_pending_userid = implode(',', $pending);
+            // Save cleaned list
+            $user->following_pending_userid = json_encode($filtered);
 
-            // Add to following
+            // Add to accepted followers
             $following = $user->following_user_id ? explode(',', $user->following_user_id) : [];
             if (!in_array($validated['follower_id'], $following)) {
                 $following[] = $validated['follower_id'];
             }
             $user->following_user_id = implode(',', $following);
+
             $user->save();
 
             return response()->json([
@@ -648,7 +668,8 @@ class UserController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
-    }
+    }   
+
 
 
 
