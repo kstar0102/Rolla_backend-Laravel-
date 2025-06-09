@@ -478,7 +478,7 @@ class UserController extends Controller
             }
 
             $tripData = Trip::whereIn('user_id', $usersIncludingRequest->pluck('id'))->with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users,following_pending_userid',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])->get();
