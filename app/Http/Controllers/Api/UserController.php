@@ -191,9 +191,15 @@ class UserController extends Controller
             $user = User::find($validated['user_id']);
 
             if ($user) {
-                $followingIds = collect(explode(',', $user->following_pending_userid))
+                $followingIds = collect(json_decode($user->following_pending_userid))  // Decode JSON
                     ->filter()
-                    ->map(fn($id) => intval(trim($id)))
+                    ->map(function ($id) {
+                        // Check if $id is an object and get its property (assuming 'id' is the field inside)
+                        if (is_object($id) && isset($id->id)) {
+                            return intval($id->id);  // Access the 'id' property if it's an object
+                        }
+                        return intval($id);  // Otherwise, just convert to int
+                    })// Ensure it's a string first, then trim
                     ->unique()
                     ->values();
 
