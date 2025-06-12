@@ -191,43 +191,58 @@ class UserController extends Controller
             $user = User::find($validated['user_id']);
 
             if ($user) {
-                $followingIds = collect(json_decode($user->following_pending_userid))  // Decode JSON
-                    ->filter()
-                    ->map(function ($id) {
-                        // Check if $id is an object and get its property (assuming 'id' is the field inside)
-                        if (is_object($id) && isset($id->id)) {
-                            return intval($id->id);  // Access the 'id' property if it's an object
-                        }
-                        return intval($id);  // Otherwise, just convert to int
-                    })// Ensure it's a string first, then trim
-                    ->unique()
-                    ->values();
+                // Step 1: Decode and collect id + date
+                $followingItems = collect(json_decode($user->following_pending_userid))
+                    ->filter(function ($item) {
+                        return isset($item->id, $item->date);
+                    })
+                    ->map(function ($item) {
+                        return [
+                            'id' => intval($item->id),
+                            'date' => $item->date,
+                        ];
+                    });
 
+                // Step 2: Extract unique IDs
+                $followingIds = $followingItems->pluck('id')->unique();
+
+                // Step 3: Get users from DB
                 $followingUsers = User::whereIn('id', $followingIds)
                     ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
                     ->get();
 
-                $response = [
+                // Step 4: Merge date into each user
+                $followingUsersWithDate = $followingUsers->map(function ($user) use ($followingItems) {
+                    $dateItem = $followingItems->firstWhere('id', $user->id);
+                    return [
+                        'id' => $user->id,
+                        'first_name' => $user->first_name,
+                        'last_name' => $user->last_name,
+                        'rolla_username' => $user->rolla_username,
+                        'photo' => $user->photo,
+                        'follow_date' => $dateItem['date'] ?? null,
+                    ];
+                });
+
+                return response()->json([
                     'statusCode' => true,
                     'message' => "Following users retrieved successfully",
-                    'data' => $followingUsers,
-                ];
-                return response()->json($response, 200);
+                    'data' => $followingUsersWithDate,
+                ], 200);
             } else {
-                $response = [
+                return response()->json([
                     'statusCode' => false,
                     'message' => "User not found",
-                ];
-                return response()->json($response, 404);
+                ], 404);
             }
         } catch (\Exception $e) {
-            $response = [
+            return response()->json([
                 'statusCode' => false,
                 'message' => $e->getMessage(),
-            ];
-            return response()->json($response, 500);
+            ], 500);
         }
     }
+
 
     /**
      * Block User
