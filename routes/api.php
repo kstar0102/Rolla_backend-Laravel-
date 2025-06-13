@@ -33,7 +33,6 @@ Route::group(['prefix' => 'user'], static function () {
     Route::get('all', [UserController::class, 'getAllUsers']);
     Route::put('update', [UserController::class, 'updateUserInfo']);
     Route::get('following_users', [UserController::class, 'getFollowingUsers']);
-    // Route::get('pendingfollowing_users', [UserController::class, 'getPedingFollowingUsers']);
     Route::get('pending_following_users', [UserController::class, 'getPendingFollowingUsers']);
     Route::get('follwed_user/trips', [UserController::class, 'followedUserTrips']);
     Route::get('block_users', [UserController::class, 'getBlockUsers']);
@@ -42,6 +41,7 @@ Route::group(['prefix' => 'user'], static function () {
     Route::post('following', [UserController::class, 'followingUser']);;
     Route::get('followed_users', [UserController::class, 'followedUsers']);
     Route::post('block', [UserController::class, 'blockUser']);
+    Route::post('removefollow', [UserController::class, 'removeFollowRequest']);
     Route::post('requestfollow', [UserController::class, 'requestToFollowUser']);
     Route::post('acceptfollow', [UserController::class, 'acceptFollowRequest']);
     Route::post('block', [UserController::class, 'blockUser']);

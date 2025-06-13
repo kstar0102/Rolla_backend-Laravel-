@@ -583,6 +583,57 @@ class UserController extends Controller
         }
     }
 
+    public function removeFollowRequest(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'following_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $pending = $user->following_pending_userid 
+                ? json_decode($user->following_pending_userid, true) 
+                : [];
+
+            $updatedPending = collect($pending)
+                ->reject(fn ($item) => $item['id'] == $validated['following_id'])
+                ->values()
+                ->toArray();
+
+            if (count($pending) !== count($updatedPending)) {
+                $user->following_pending_userid = json_encode($updatedPending);
+                $user->save();
+
+                return response()->json([
+                    'statusCode' => true,
+                    'message' => "Follow request removed",
+                    'data' => $updatedPending,
+                ]);
+            }
+
+            return response()->json([
+                'statusCode' => false,
+                'message' => "Follow request not found",
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
     public function requestToFollowUser(Request $request)
     {
         try {
