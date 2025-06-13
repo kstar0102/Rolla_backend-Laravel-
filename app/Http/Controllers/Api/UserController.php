@@ -629,70 +629,68 @@ class UserController extends Controller
     }
 
     public function acceptFollowRequest(Request $request)
-    {   
+    {
         try {
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
-                'follower_id' => 'required|integer|exists:users,id',
+                'following_id' => 'required|integer|exists:users,id',
             ]);
-
+    
             $user = User::find($validated['user_id']);
-
+    
             if (!$user) {
                 return response()->json([
                     'statusCode' => false,
                     'message' => "User not found",
                 ], 404);
             }
-
-            // Decode JSON from DB
-            $pending = json_decode($user->following_pending_userid, true) ?? [];
-
-            // Check if request exists
-            $exists = false;
-            $filtered = [];
-            foreach ($pending as $entry) {
-                if (isset($entry['id']) && $entry['id'] == $validated['follower_id']) {
-                    $exists = true;
-                    continue; // remove it
-                }
-                $filtered[] = $entry; // keep others
-            }
-
-            if (!$exists) {
+    
+            // Decode JSON array from following_pending_userid
+            $pendingList = json_decode($user->following_pending_userid, true) ?? [];
+    
+            // Filter out the one with matching ID (remove it from pending list)
+            $filteredPending = collect($pendingList)
+                ->filter(function ($item) use ($validated) {
+                    return isset($item['id']) && $item['id'] != $validated['following_id'];
+                })
+                ->values();
+    
+            // If no entry was removed, that means the request doesn't exist
+            if (count($pendingList) === $filteredPending->count()) {
                 return response()->json([
                     'statusCode' => false,
                     'message' => "No such follow request found",
                 ], 400);
             }
-
-            // Save cleaned list
-            $user->following_pending_userid = json_encode($filtered);
-
-            // Add to accepted followers
-            $following = $user->following_user_id ? explode(',', $user->following_user_id) : [];
-            if (!in_array($validated['follower_id'], $following)) {
-                $following[] = $validated['follower_id'];
+    
+            // Save the updated pending list
+            $user->following_pending_userid = $filteredPending->toJson();
+    
+            // Add to following_user_id (CSV-style string field)
+            $followingIds = $user->following_user_id
+                ? array_map('intval', explode(',', $user->following_user_id))
+                : [];
+    
+            if (!in_array($validated['following_id'], $followingIds)) {
+                $followingIds[] = $validated['following_id'];
             }
-            $user->following_user_id = implode(',', $following);
-
+    
+            $user->following_user_id = implode(',', $followingIds);
             $user->save();
-
+    
             return response()->json([
                 'statusCode' => true,
                 'message' => "Follow request accepted",
                 'data' => $user,
-            ]);
+            ], 200);
+    
         } catch (\Exception $e) {
             return response()->json([
                 'statusCode' => false,
                 'message' => $e->getMessage(),
             ], 500);
         }
-    }   
-
-
-
+    }
 
     /**
      * Add a like to a droppin by a user.
