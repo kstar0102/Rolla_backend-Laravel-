@@ -181,6 +181,78 @@ class UserController extends Controller
         }
     }
 
+    public function getNotificationUsers(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            // --- Get from pending list ---
+            $pendingItems = collect(json_decode($user->following_pending_userid))
+                ->filter(fn($item) => isset($item->id, $item->date))
+                ->map(fn($item) => [
+                    'id' => intval($item->id),
+                    'date' => $item->date,
+                    'from' => 'pending'
+                ]);
+
+            // --- Get from following_user_id with notificationBool == false ---
+            $followItems = collect(json_decode($user->following_user_id))
+                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool) && $item->notificationBool === false)
+                ->map(fn($item) => [
+                    'id' => intval($item->id),
+                    'date' => $item->date,
+                    'from' => 'follow'
+                ]);
+
+            // Merge both lists
+            $allItems = $pendingItems->merge($followItems);
+
+            // Get unique user IDs
+            $allUserIds = $allItems->pluck('id')->unique();
+
+            // Get user details from DB
+            $fetchedUsers = User::whereIn('id', $allUserIds)
+                ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
+                ->get();
+
+            // Merge date and from fields into each user
+            $finalResult = $fetchedUsers->map(function ($u) use ($allItems) {
+                $match = $allItems->firstWhere('id', $u->id);
+                return [
+                    'id' => $u->id,
+                    'first_name' => $u->first_name,
+                    'last_name' => $u->last_name,
+                    'rolla_username' => $u->rolla_username,
+                    'photo' => $u->photo,
+                    'follow_date' => $match['date'] ?? null,
+                    'from' => $match['from'] ?? null,
+                ];
+            });
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Users retrieved successfully",
+                'data' => $finalResult,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
     public function getPendingFollowingUsers(Request $request)
     {
@@ -243,7 +315,6 @@ class UserController extends Controller
             ], 500);
         }
     }
-
 
     /**
      * Block User

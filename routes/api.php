@@ -34,6 +34,7 @@ Route::group(['prefix' => 'user'], static function () {
     Route::put('update', [UserController::class, 'updateUserInfo']);
     Route::get('following_users', [UserController::class, 'getFollowingUsers']);
     Route::get('pending_following_users', [UserController::class, 'getPendingFollowingUsers']);
+    Route::get('notification_users', [UserController::class, 'getNotificationUsers']);
     Route::get('follwed_user/trips', [UserController::class, 'followedUserTrips']);
     Route::get('block_users', [UserController::class, 'getBlockUsers']);
     Route::get('block_user/trips', [UserController::class, 'getBlockUserTrips']);
