@@ -48,6 +48,7 @@ Route::group(['prefix' => 'user'], static function () {
     Route::post('acceptfollow', [UserController::class, 'acceptFollowRequest']);
     Route::post('block', [UserController::class, 'blockUser']);
     Route::delete('delete', [UserController::class, 'deleteUserAccount']);
+    Route::post('accpetViewed', [UserController::class, 'markFollowNotificationAsSent']);
 });
 
 // Trip routes

@@ -316,6 +316,50 @@ class UserController extends Controller
         }
     }
 
+    public function markFollowNotificationAsSent(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'following_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $followList = collect(json_decode($user->following_user_id)) ?? collect();
+
+            $updatedList = $followList->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['following_id']) {
+                    $item->notificationBool = true;
+                }
+                return $item;
+            });
+
+            $user->following_user_id = $updatedList->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Notification marked as sent",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
     /**
      * Block User
      *
