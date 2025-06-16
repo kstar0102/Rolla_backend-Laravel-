@@ -42,6 +42,7 @@ Route::group(['prefix' => 'user'], static function () {
     Route::get('followed_users', [UserController::class, 'followedUsers']);
     Route::post('block', [UserController::class, 'blockUser']);
     Route::post('removefollow', [UserController::class, 'removeFollowRequest']);
+    Route::post('removeUserfollow', [UserController::class, 'removeUserFollow']);
     Route::post('requestfollow', [UserController::class, 'requestToFollowUser']);
     Route::post('acceptfollow', [UserController::class, 'acceptFollowRequest']);
     Route::post('block', [UserController::class, 'blockUser']);
