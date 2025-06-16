@@ -603,7 +603,12 @@ class UserController extends Controller
                 ], 404);
             }
 
-            $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
+            // $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
+
+            $usersFollowing = User::whereRaw(
+                "JSON_CONTAINS(following_user_id, JSON_OBJECT('id', ?), '$')",
+                [$validated['user_id']]
+            )->get();
             
             $usersIncludingRequest = $usersFollowing->push($user);
             
