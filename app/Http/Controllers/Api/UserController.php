@@ -605,7 +605,7 @@ class UserController extends Controller
             }
 
             // Step 1: Get followed users from JSON
-            $followingJson = json_decode($user->following_user_id, true) ?? [];
+            $followingJson = json_decode($user->followed_user_id, true) ?? [];
 
             // Step 2: Extract user IDs
             $followingIds = collect($followingJson)
@@ -620,7 +620,7 @@ class UserController extends Controller
 
             // Step 4: Get trips
             $tripData = Trip::whereIn('user_id', $allUserIds)->with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users,following_pending_userid',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,followed_user_id,block_users,following_pending_userid',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])->get();
@@ -874,58 +874,75 @@ class UserController extends Controller
     {
         try {
             $validated = $request->validate([
-                'user_id' => 'required|integer|exists:users,id',
-                'following_id' => 'required|integer|exists:users,id',
+                'user_id' => 'required|integer|exists:users,id',         
+                'following_id' => 'required|integer|exists:users,id',    
             ]);
-    
-            $user = User::find($validated['user_id']);
-    
-            if (!$user) {
+
+            $user = User::find($validated['user_id']);         // User A
+            $followedUser = User::find($validated['following_id']); // User B
+
+            if (!$user || !$followedUser) {
                 return response()->json([
                     'statusCode' => false,
                     'message' => "User not found",
                 ], 404);
             }
-    
+
+            // Remove from pending list
             $pendingList = json_decode($user->following_pending_userid, true) ?? [];
-    
+
             $filteredPending = collect($pendingList)
                 ->filter(fn($item) => isset($item['id']) && $item['id'] != $validated['following_id'])
                 ->values();
-    
+
             if (count($pendingList) === $filteredPending->count()) {
                 return response()->json([
                     'statusCode' => false,
                     'message' => "No such follow request found",
                 ], 400);
             }
-    
+
             $user->following_pending_userid = json_encode($filteredPending);
-    
-            // New format: JSON array of objects
+
+            // Add to following_user_id for current user
             $followingList = json_decode($user->following_user_id, true) ?? [];
-    
-            // Check if already following
+
             $alreadyFollowing = collect($followingList)
                 ->contains(fn($item) => $item['id'] == $validated['following_id']);
-    
+
             if (!$alreadyFollowing) {
                 $followingList[] = [
                     'id' => $validated['following_id'],
                     'date' => Carbon::now()->toIso8601String(),
                     'notificationBool' => false,
                 ];
+                $user->following_user_id = json_encode($followingList);
             }
-    
-            $user->following_user_id = json_encode($followingList);
+
+            // Add to followed_user_id for the followed user
+            $followedList = json_decode($followedUser->followed_user_id, true) ?? [];
+
+            $alreadyFollowed = collect($followedList)
+                ->contains(fn($item) => $item['id'] == $validated['user_id']);
+
+            if (!$alreadyFollowed) {
+                $followedList[] = [
+                    'id' => $validated['user_id'],
+                    'date' => Carbon::now()->toIso8601String(),
+                    'notificationBool' => false,
+                ];
+                $followedUser->followed_user_id = json_encode($followedList);
+            }
+
             $user->save();
-    
+            $followedUser->save();
+
             return response()->json([
                 'statusCode' => true,
                 'message' => "Follow request accepted",
                 'data' => $user,
             ], 200);
-    
+
         } catch (\Exception $e) {
             return response()->json([
                 'statusCode' => false,
@@ -981,71 +998,6 @@ class UserController extends Controller
             ], 500);
         }
     }
-
-    
-    // public function acceptFollowRequest(Request $request)
-    // {
-    //     try {
-    //         $validated = $request->validate([
-    //             'user_id' => 'required|integer|exists:users,id',
-    //             'following_id' => 'required|integer|exists:users,id',
-    //         ]);
-    
-    //         $user = User::find($validated['user_id']);
-    
-    //         if (!$user) {
-    //             return response()->json([
-    //                 'statusCode' => false,
-    //                 'message' => "User not found",
-    //             ], 404);
-    //         }
-    
-    //         // Decode JSON array from following_pending_userid
-    //         $pendingList = json_decode($user->following_pending_userid, true) ?? [];
-    
-    //         // Filter out the one with matching ID (remove it from pending list)
-    //         $filteredPending = collect($pendingList)
-    //             ->filter(function ($item) use ($validated) {
-    //                 return isset($item['id']) && $item['id'] != $validated['following_id'];
-    //             })
-    //             ->values();
-    
-    //         // If no entry was removed, that means the request doesn't exist
-    //         if (count($pendingList) === $filteredPending->count()) {
-    //             return response()->json([
-    //                 'statusCode' => false,
-    //                 'message' => "No such follow request found",
-    //             ], 400);
-    //         }
-    
-    //         // Save the updated pending list
-    //         $user->following_pending_userid = $filteredPending->toJson();
-    
-    //         // Add to following_user_id (CSV-style string field)
-    //         $followingIds = $user->following_user_id
-    //             ? array_map('intval', explode(',', $user->following_user_id))
-    //             : [];
-    
-    //         if (!in_array($validated['following_id'], $followingIds)) {
-    //             $followingIds[] = $validated['following_id'];
-    //         }
-    
-    //         $user->following_user_id = implode(',', $followingIds);
-    //         $user->save();
-    
-    //         return response()->json([
-    //             'statusCode' => true,
-    //             'message' => "Follow request accepted",
-    //             'data' => $user,
-    //         ], 200);
-    
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'statusCode' => false,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
 
     /**
      * Add a like to a droppin by a user.

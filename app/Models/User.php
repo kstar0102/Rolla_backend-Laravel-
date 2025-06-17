@@ -28,7 +28,8 @@ class User extends Authenticatable
         'garage',
         'following_user_id',
         'block_users',
-        'following_pending_userid'
+        'following_pending_userid',
+        'followed_user_id'
     ];
 
     public function trips()
