@@ -488,7 +488,7 @@ class TripController extends Controller
             'droppins.*.id' => 'nullable|integer',
             'droppins.*.stop_index' => 'nullable|integer',
             'droppins.*.image_path' => 'required|string',
-            'droppins.*.image_caption' => 'required|string',
+            'droppins.*.image_caption' => 'nullable|string',
             'start_location' => 'nullable|string',
             'destination_location' => 'nullable|string',
             'map_style' => 'nullable|string',
@@ -561,7 +561,7 @@ class TripController extends Controller
                     $updateData = [
                         'stop_index' => $droppinData['stop_index'],
                         'image_path' => $droppinData['image_path'],
-                        'image_caption' => $droppinData['image_caption'],
+                        'image_caption' => $droppinData['image_caption'] ?? "",
                     ];
             
                     // Only include 'deley_time' if it exists in the input
