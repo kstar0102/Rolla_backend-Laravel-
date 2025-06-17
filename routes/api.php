@@ -49,6 +49,7 @@ Route::group(['prefix' => 'user'], static function () {
     Route::post('block', [UserController::class, 'blockUser']);
     Route::delete('delete', [UserController::class, 'deleteUserAccount']);
     Route::post('accpetViewed', [UserController::class, 'markFollowNotificationAsSent']);
+    Route::post('tapviewed', [UserController::class, 'markTagNotificationAsRead']);
 });
 
 // Trip routes
