@@ -121,7 +121,10 @@ class TripController extends Controller
             ]);
 
             if (!empty($request->trip_tags)) {
-                $taggedUserIds = explode(',', $request->trip_tags);
+                $taggedUserIds = is_array($request->trip_tags)
+                    ? $request->trip_tags
+                    : json_decode($request->trip_tags, true);
+            
                 $currentUserId = $request->user_id;
                 $now = Carbon::now()->toDateTimeString();
             
@@ -520,25 +523,25 @@ class TripController extends Controller
             'map_style' => 'nullable|string',
             'delay_time' => 'nullable|date',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation errors',
                 'errors' => $validator->errors(),
             ], 422);
         }
-    
+
         try {
             DB::beginTransaction();
 
-            $trip = Trip::find($id);
+            $trip = Trip::findOrFail($id);
 
-            if (!$trip) {
-                return response()->json([
-                    'message' => 'not exist',
-                ], 404);
-            }
-    
+            // Backup old trip_tags from DB
+            $oldTaggedIds = $trip->trip_tags;
+            $oldTaggedIds = is_array($oldTaggedIds) ? $oldTaggedIds : json_decode($oldTaggedIds, true);
+            if (!is_array($oldTaggedIds)) $oldTaggedIds = [];
+
+            // Update trip fields
             $trip->update([
                 'user_id' => $request->user_id,
                 'start_address' => $request->start_address,
@@ -559,88 +562,85 @@ class TripController extends Controller
                 'deley_time' => $request->delay_time,
             ]);
 
-            // if ($request->has('droppins') && is_array($request->droppins)) {
-            //     foreach ($request->droppins as $droppinData) {
-            //         if (!empty($droppinData['id'])) {
-            //             $droppin = Droppin::find($droppinData['id']);
-            //             if ($droppin) {
-            //                 $droppin->update([
-            //                     'stop_index' => $droppinData['stop_index'],
-            //                     'image_path' => $droppinData['image_path'],
-            //                     'image_caption' => $droppinData['image_caption'],
-            //                     'deley_time' => $droppinData['delay_time'],
-            //                 ]);
-            //             }
-            //         } else {
-            //             $trip->droppins()->create([
-            //                 'stop_index' => $droppinData['stop_index'],
-            //                 'image_path' => $droppinData['image_path'],
-            //                 'image_caption' => $droppinData['image_caption'],
-            //                 'deley_time' => $droppinData['delay_time'],
-            //             ]);
-            //         }
-            //     }
-            // }
-
+            // Handle Droppins
             if ($request->has('droppins') && is_array($request->droppins)) {
                 foreach ($request->droppins as $droppinData) {
                     $updateData = [
                         'stop_index' => $droppinData['stop_index'],
                         'image_path' => $droppinData['image_path'],
-                        'image_caption' => $droppinData['image_caption'] ?? "",
+                        'image_caption' => $droppinData['image_caption'] ?? '',
                     ];
-            
-                    // Only include 'deley_time' if it exists in the input
                     if (!empty($droppinData['delay_time'])) {
                         $updateData['deley_time'] = $droppinData['delay_time'];
                     }
-            
+
                     if (!empty($droppinData['id'])) {
                         $droppin = Droppin::find($droppinData['id']);
-                        if ($droppin) {
-                            $droppin->update($updateData);
-                        }
+                        if ($droppin) $droppin->update($updateData);
                     } else {
                         $trip->droppins()->create($updateData);
                     }
                 }
             }
 
-            // ✅ Update tag_notification
+            // Handle Tag Notifications
             if (!empty($request->trip_tags)) {
-                $taggedUserIds = explode(',', $request->trip_tags);
                 $currentUserId = $request->user_id;
                 $now = Carbon::now()->toDateTimeString();
-
-                foreach ($taggedUserIds as $taggedId) {
-                    $taggedUser = User::find($taggedId);
-                    if ($taggedUser) {
-                        $notifications = $taggedUser->tag_notification ?? [];
-                        if (is_string($notifications)) {
-                            $notifications = json_decode($notifications, true);
-                        }
-
-                        // Prevent duplicate notifications from same trip creator
-                        $alreadyTagged = collect($notifications)->contains(function ($item) use ($currentUserId) {
-                            return $item['id'] == $currentUserId;
+            
+                // Parse new tagged IDs
+                $newTaggedIds = is_array($request->trip_tags)
+                    ? $request->trip_tags
+                    : json_decode($request->trip_tags, true);
+                if (!is_array($newTaggedIds)) $newTaggedIds = [];
+            
+                // Store new tags in trip
+                $trip->trip_tags = json_encode($newTaggedIds);
+                $trip->save();
+            
+                // Get all users who might be affected (including those already tagged)
+                $allUserIds = User::whereNotNull('tag_notification')->pluck('id');
+            
+                foreach ($allUserIds as $userId) {
+                    $user = User::find($userId);
+                    if (!$user) continue;
+            
+                    $notifications = $user->tag_notification ?? [];
+                    if (is_string($notifications)) $notifications = json_decode($notifications, true);
+                    if (!is_array($notifications)) $notifications = [];
+            
+                    // Determine if this user should have a tag from the current trip owner
+                    $hasTagFromThisUser = collect($notifications)->contains(function ($item) use ($currentUserId) {
+                        return isset($item['id']) && $item['id'] == $currentUserId;
+                    });
+            
+                    $isNowTagged = in_array($userId, $newTaggedIds);
+            
+                    // Case 1: Should NOT be tagged anymore → remove it
+                    if (!$isNowTagged && $hasTagFromThisUser) {
+                        $notifications = array_filter($notifications, function ($item) use ($currentUserId) {
+                            return isset($item['id']) && $item['id'] != $currentUserId;
                         });
-
-                        if (!$alreadyTagged) {
-                            $notifications[] = [
-                                'id' => $currentUserId,
-                                'date' => $now,
-                                'notificationBool' => false,
-                            ];
-
-                            $taggedUser->tag_notification = $notifications;
-                            $taggedUser->save();
-                        }
+                        $user->tag_notification = array_values($notifications);
+                        $user->save();
+                    }
+            
+                    // Case 2: Is newly tagged and doesn't already have the notification → add it
+                    if ($isNowTagged && !$hasTagFromThisUser) {
+                        $notifications[] = [
+                            'id' => $currentUserId,
+                            'date' => $now,
+                            'notificationBool' => false,
+                        ];
+                        $user->tag_notification = $notifications;
+                        $user->save();
                     }
                 }
             }
             
+
             DB::commit();
-    
+
             return response()->json([
                 'message' => 'Trip updated successfully',
                 'trip' => $trip->load('droppins'),
@@ -652,13 +652,14 @@ class TripController extends Controller
                 'error' => $qe->getMessage(),
             ], 500);
         } catch (Exception $e) {
-            DB::rollBack(); 
+            DB::rollBack();
             return response()->json([
                 'message' => 'An unexpected error occurred',
                 'error' => $e->getMessage(),
             ], 500);
         }
     }
+
 
     public function removeTrip(Request $request)
     {
