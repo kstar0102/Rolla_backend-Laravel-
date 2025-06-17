@@ -587,73 +587,143 @@ class UserController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function followedUserTrips(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'user_id' => 'required|integer|exists:users,id',
-            ]);
-    
-            $user = User::find($validated['user_id']);
-    
-            if (!$user) {
-                return response()->json([
-                    'statusCode' => false,
-                    'message' => "User not found",
-                ], 404);
-            }
 
-            // $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
+     public function followedUserTrips(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
 
-            $usersFollowing = User::whereRaw(
-                "JSON_CONTAINS(following_user_id, JSON_OBJECT('id', ?), '$')",
-                [$validated['user_id']]
-            )->get();
-            
-            $usersIncludingRequest = $usersFollowing->push($user);
-            
-            if ($usersIncludingRequest->isEmpty()) {
-                return response()->json([
-                    'statusCode' => false,
-                    'message' => "No users following this user",
-                ], 404);
-            }
+        $user = User::find($validated['user_id']);
 
-            $tripData = Trip::whereIn('user_id', $usersIncludingRequest->pluck('id'))->with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users,following_pending_userid',
-                'droppins',
-                'comments.user:id,photo,rolla_username,first_name,last_name',
-            ])->get();
-
-            $tripData->each(function ($trip) {
-                $trip->droppins->transform(function ($droppin) {
-                    $userIds = collect(explode(',', $droppin->likes_user_id))
-                        ->filter()
-                        ->map(fn($id) => intval(trim($id)))
-                        ->unique();
-    
-                    $likedUsers = User::whereIn('id', $userIds)
-                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                        ->get();
-    
-                    $droppin->liked_users = $likedUsers;
-    
-                    return $droppin;
-                });
-            });
-
-            return response()->json([
-                'statusCode' => true,
-                'message' => "Users found successfully",
-                'data' => $tripData,
-            ], 200);
-        } catch (\Exception $e) {
+        if (!$user) {
             return response()->json([
                 'statusCode' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+                'message' => "User not found",
+            ], 404);
         }
+
+        // Step 1: Get followed users from JSON
+        $followingJson = json_decode($user->following_user_id, true) ?? [];
+
+        // Step 2: Extract user IDs
+        $followingIds = collect($followingJson)
+            ->pluck('id')
+            ->filter()
+            ->map(fn($id) => intval($id))
+            ->unique()
+            ->toArray();
+
+        // Step 3: Add the current user's ID
+        $allUserIds = array_unique(array_merge([$user->id], $followingIds));
+
+        // Step 4: Get trips
+        $tripData = Trip::whereIn('user_id', $allUserIds)->with([
+            'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users,following_pending_userid',
+            'droppins',
+            'comments.user:id,photo,rolla_username,first_name,last_name',
+        ])->get();
+
+        // Step 5: Attach liked users to droppins
+        $tripData->each(function ($trip) {
+            $trip->droppins->transform(function ($droppin) {
+                $userIds = collect(explode(',', $droppin->likes_user_id))
+                    ->filter()
+                    ->map(fn($id) => intval(trim($id)))
+                    ->unique();
+
+                $likedUsers = User::whereIn('id', $userIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get();
+
+                $droppin->liked_users = $likedUsers;
+
+                return $droppin;
+            });
+        });
+
+        return response()->json([
+            'statusCode' => true,
+            'message' => "Trips retrieved successfully",
+            'data' => $tripData,
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'statusCode' => false,
+            'message' => $e->getMessage(),
+        ], 500);
     }
+}
+
+    // public function followedUserTrips(Request $request)
+    // {
+    //     try {
+    //         $validated = $request->validate([
+    //             'user_id' => 'required|integer|exists:users,id',
+    //         ]);
+    
+    //         $user = User::find($validated['user_id']);
+    
+    //         if (!$user) {
+    //             return response()->json([
+    //                 'statusCode' => false,
+    //                 'message' => "User not found",
+    //             ], 404);
+    //         }
+
+    //         // $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
+
+    //         $usersFollowing = User::whereRaw(
+    //             "JSON_SEARCH(JSON_EXTRACT(following_user_id, '$[*].id'), 'one', ?)",
+    //             [$validated['user_id']]
+    //         )->get();
+            
+    //         $usersIncludingRequest = $usersFollowing->push($user);
+            
+    //         if ($usersIncludingRequest->isEmpty()) {
+    //             return response()->json([
+    //                 'statusCode' => false,
+    //                 'message' => "No users following this user",
+    //             ], 404);
+    //         }
+
+    //         $tripData = Trip::whereIn('user_id', $usersIncludingRequest->pluck('id'))->with([
+    //             'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users,following_pending_userid',
+    //             'droppins',
+    //             'comments.user:id,photo,rolla_username,first_name,last_name',
+    //         ])->get();
+
+    //         $tripData->each(function ($trip) {
+    //             $trip->droppins->transform(function ($droppin) {
+    //                 $userIds = collect(explode(',', $droppin->likes_user_id))
+    //                     ->filter()
+    //                     ->map(fn($id) => intval(trim($id)))
+    //                     ->unique();
+    
+    //                 $likedUsers = User::whereIn('id', $userIds)
+    //                     ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+    //                     ->get();
+    
+    //                 $droppin->liked_users = $likedUsers;
+    
+    //                 return $droppin;
+    //             });
+    //         });
+
+    //         return response()->json([
+    //             'statusCode' => true,
+    //             'message' => "Users found successfully",
+    //             'data' => $tripData,
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'statusCode' => false,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     /**
      * Add a like to a droppin by a user.
