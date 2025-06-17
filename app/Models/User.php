@@ -29,7 +29,8 @@ class User extends Authenticatable
         'following_user_id',
         'block_users',
         'following_pending_userid',
-        'followed_user_id'
+        'followed_user_id',
+        'tag_notification'
     ];
 
     public function trips()

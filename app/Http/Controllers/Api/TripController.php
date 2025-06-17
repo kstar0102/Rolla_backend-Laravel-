@@ -119,6 +119,32 @@ class TripController extends Controller
                 'map_style' => $request->map_style,
                 'deley_time' => $request->delay_time,
             ]);
+
+            if (!empty($request->trip_tags)) {
+                $taggedUserIds = explode(',', $request->trip_tags);
+                $currentUserId = $request->user_id;
+                $now = Carbon::now()->toDateTimeString();
+            
+                foreach ($taggedUserIds as $taggedId) {
+                    $taggedUser = User::find($taggedId);
+                    if ($taggedUser) {
+                        $notifications = $taggedUser->tag_notification ?? [];
+                        if (is_string($notifications)) {
+                            $notifications = json_decode($notifications, true);
+                        }
+            
+                        $notifications[] = [
+                            'id' => $currentUserId,
+                            'date' => $now,
+                            'notificationBool' => false,
+                        ];
+            
+                        $taggedUser->tag_notification = $notifications;
+                        $taggedUser->save();
+                    }
+                }
+            }
+            
     
             if ($request->has('droppins') && is_array($request->droppins)) {
                 foreach ($request->droppins as $droppinData) {
@@ -579,8 +605,40 @@ class TripController extends Controller
                     }
                 }
             }
+
+            // ✅ Update tag_notification
+            if (!empty($request->trip_tags)) {
+                $taggedUserIds = explode(',', $request->trip_tags);
+                $currentUserId = $request->user_id;
+                $now = Carbon::now()->toDateTimeString();
+
+                foreach ($taggedUserIds as $taggedId) {
+                    $taggedUser = User::find($taggedId);
+                    if ($taggedUser) {
+                        $notifications = $taggedUser->tag_notification ?? [];
+                        if (is_string($notifications)) {
+                            $notifications = json_decode($notifications, true);
+                        }
+
+                        // Prevent duplicate notifications from same trip creator
+                        $alreadyTagged = collect($notifications)->contains(function ($item) use ($currentUserId) {
+                            return $item['id'] == $currentUserId;
+                        });
+
+                        if (!$alreadyTagged) {
+                            $notifications[] = [
+                                'id' => $currentUserId,
+                                'date' => $now,
+                                'notificationBool' => false,
+                            ];
+
+                            $taggedUser->tag_notification = $notifications;
+                            $taggedUser->save();
+                        }
+                    }
+                }
+            }
             
-    
             DB::commit();
     
             return response()->json([
