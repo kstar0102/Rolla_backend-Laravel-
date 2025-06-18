@@ -235,19 +235,6 @@ class UserController extends Controller
                 ->get();
 
             // Merge extra info
-            // $finalResult = $fetchedUsers->map(function ($u) use ($allItems) {
-            //     $match = $allItems->firstWhere('id', $u->id);
-            //     return [
-            //         'id' => $u->id,
-            //         'first_name' => $u->first_name,
-            //         'last_name' => $u->last_name,
-            //         'rolla_username' => $u->rolla_username,
-            //         'photo' => $u->photo,
-            //         'follow_date' => $match['date'] ?? null,
-            //         'from' => $match['from'] ?? null,
-            //     ];
-            // });
-
             $finalResult = $allItems->map(function ($item) use ($fetchedUsers) {
                 $user = $fetchedUsers->firstWhere('id', $item['id']);
                 if (!$user) return null;
@@ -261,7 +248,10 @@ class UserController extends Controller
                     'follow_date' => $item['date'],
                     'from' => $item['from'],
                 ];
-            })->filter(); // remove nulls
+            })->filter() // remove nulls
+              ->sortByDesc('follow_date') // ✅ sort newest first
+              ->values(); // reset keys for clean JSON
+            
 
             return response()->json([
                 'statusCode' => true,
