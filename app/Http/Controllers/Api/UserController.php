@@ -197,7 +197,7 @@ class UserController extends Controller
                 ], 404);
             }
 
-            // --- Get from pending list ---
+            // --- From pending list ---
             $pendingItems = collect(json_decode($user->following_pending_userid))
                 ->filter(fn($item) => isset($item->id, $item->date))
                 ->map(fn($item) => [
@@ -206,7 +206,7 @@ class UserController extends Controller
                     'from' => 'pending'
                 ]);
 
-            // --- Get from following_user_id with notificationBool == false ---
+            // --- From following_user_id with notificationBool === false ---
             $followItems = collect(json_decode($user->following_user_id))
                 ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
@@ -215,18 +215,27 @@ class UserController extends Controller
                     'from' => 'follow'
                 ]);
 
-            // Merge both lists
-            $allItems = $pendingItems->merge($followItems);
+            // --- From tag_notification with notificationBool === false ---
+            $tagItems = collect(json_decode($user->tag_notification))
+                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool) && $item->notificationBool === false)
+                ->map(fn($item) => [
+                    'id' => intval($item->id),
+                    'date' => $item->date,
+                    'from' => 'tag'
+                ]);
+
+            // Merge all
+            $allItems = $pendingItems->merge($followItems)->merge($tagItems);
 
             // Get unique user IDs
             $allUserIds = $allItems->pluck('id')->unique();
 
-            // Get user details from DB
+            // Get user details
             $fetchedUsers = User::whereIn('id', $allUserIds)
                 ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
                 ->get();
 
-            // Merge date and from fields into each user
+            // Merge extra info
             $finalResult = $fetchedUsers->map(function ($u) use ($allItems) {
                 $match = $allItems->firstWhere('id', $u->id);
                 return [
@@ -253,6 +262,7 @@ class UserController extends Controller
             ], 500);
         }
     }
+
 
     public function getPendingFollowingUsers(Request $request)
     {
@@ -664,7 +674,7 @@ class UserController extends Controller
 
             // Step 4: Get trips
             $tripData = Trip::whereIn('user_id', $allUserIds)->with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id,followed_user_id,block_users,following_pending_userid',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,followed_user_id,block_users,following_pending_userid,tag_notification',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])->get();
