@@ -216,11 +216,14 @@ class UserController extends Controller
                 ]);
 
             // --- From tag_notification with notificationBool === false ---
-            $tagItems = collect(json_decode($user->tag_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool) && $item->notificationBool === false)
+            $tagItems = collect(json_decode($user->tag_notification, true))  // <-- add true here
+                ->filter(fn($item) =>
+                    isset($item['id'], $item['date'], $item['notificationBool']) &&
+                    $item['notificationBool'] === false
+                )
                 ->map(fn($item) => [
-                    'id' => intval($item->id),
-                    'date' => $item->date,
+                    'id' => intval($item['id']),
+                    'date' => $item['date'],
                     'from' => 'tag'
                 ]);
 
