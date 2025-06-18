@@ -223,8 +223,17 @@ class UserController extends Controller
                     'from' => 'tag'
                 ]);
 
+            $commentItems = collect(json_decode($user->comment_notification))
+                ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->notificationBool) && $item->notificationBool === false)
+                ->map(fn($item) => [
+                    'id' => intval($item->id),
+                    'date' => $item->date,
+                    'trip' => $item->tripid,
+                    'from' => 'comment'
+                ]);
+
             // Merge all
-            $allItems = $pendingItems->merge($followItems)->merge($tagItems);
+            $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems);
 
             // Get unique user IDs
             $allUserIds = $allItems->pluck('id')->unique();
@@ -239,7 +248,7 @@ class UserController extends Controller
                 $user = $fetchedUsers->firstWhere('id', $item['id']);
                 if (!$user) return null;
             
-                return [
+                $base = [
                     'id' => $user->id,
                     'first_name' => $user->first_name,
                     'last_name' => $user->last_name,
@@ -248,9 +257,14 @@ class UserController extends Controller
                     'follow_date' => $item['date'],
                     'from' => $item['from'],
                 ];
-            })->filter() // remove nulls
-              ->sortByDesc('follow_date') // ✅ sort newest first
-              ->values(); // reset keys for clean JSON
+            
+                // Add trip ID only if it's a comment notification
+                if ($item['from'] === 'comment' && isset($item['trip'])) {
+                    $base['trip'] = $item['trip'];
+                }
+            
+                return $base;
+            })->filter()->sortByDesc('follow_date')->values();
             
 
             return response()->json([
@@ -372,6 +386,50 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    public function markCommentNotificationAsRead(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'commenter_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $notifications = collect(json_decode($user->comment_notification)) ?? collect();
+
+            $updatedNotifications = $notifications->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['commenter_id']) {
+                    $item->notificationBool = true;
+                }
+                return $item;
+            });
+
+            $user->comment_notification = $updatedNotifications->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Comment notification(s) marked as read",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
 
     public function markFollowNotificationAsSent(Request $request)
@@ -678,7 +736,7 @@ class UserController extends Controller
 
             // Step 4: Get trips
             $tripData = Trip::whereIn('user_id', $allUserIds)->with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id,followed_user_id,block_users,following_pending_userid,tag_notification',
+                'user:id,photo,rolla_username,first_name,last_name,following_user_id,followed_user_id,block_users,following_pending_userid,tag_notification,comment_notification',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])->get();
