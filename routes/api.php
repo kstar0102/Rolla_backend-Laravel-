@@ -51,6 +51,7 @@ Route::group(['prefix' => 'user'], static function () {
     Route::post('accpetViewed', [UserController::class, 'markFollowNotificationAsSent']);
     Route::post('tapviewed', [UserController::class, 'markTagNotificationAsRead']);
     Route::post('commentviewed', [UserController::class, 'markCommentNotificationAsRead']);
+    Route::post('likedviewed', [UserController::class, 'markLikeNotificationAsRead']);
 });
 
 // Trip routes
