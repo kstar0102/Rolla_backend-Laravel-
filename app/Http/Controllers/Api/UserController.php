@@ -223,18 +223,6 @@ class UserController extends Controller
                     'from' => 'tag'
                 ]);
 
-            // --- From tag_notification with notificationBool === false ---
-            // $tagItems = collect(json_decode($user->tag_notification, true))  // <-- add true here
-            //     ->filter(fn($item) =>
-            //         isset($item['id'], $item['date'], $item['notificationBool']) ||
-            //         $item['notificationBool'] === false
-            //     )
-            //     ->map(fn($item) => [
-            //         'id' => intval($item['id']),
-            //         'date' => $item['date'],
-            //         'from' => 'tag'
-            //     ]);
-
             // Merge all
             $allItems = $pendingItems->merge($followItems)->merge($tagItems);
 
@@ -247,18 +235,33 @@ class UserController extends Controller
                 ->get();
 
             // Merge extra info
-            $finalResult = $fetchedUsers->map(function ($u) use ($allItems) {
-                $match = $allItems->firstWhere('id', $u->id);
+            // $finalResult = $fetchedUsers->map(function ($u) use ($allItems) {
+            //     $match = $allItems->firstWhere('id', $u->id);
+            //     return [
+            //         'id' => $u->id,
+            //         'first_name' => $u->first_name,
+            //         'last_name' => $u->last_name,
+            //         'rolla_username' => $u->rolla_username,
+            //         'photo' => $u->photo,
+            //         'follow_date' => $match['date'] ?? null,
+            //         'from' => $match['from'] ?? null,
+            //     ];
+            // });
+
+            $finalResult = $allItems->map(function ($item) use ($fetchedUsers) {
+                $user = $fetchedUsers->firstWhere('id', $item['id']);
+                if (!$user) return null;
+            
                 return [
-                    'id' => $u->id,
-                    'first_name' => $u->first_name,
-                    'last_name' => $u->last_name,
-                    'rolla_username' => $u->rolla_username,
-                    'photo' => $u->photo,
-                    'follow_date' => $match['date'] ?? null,
-                    'from' => $match['from'] ?? null,
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'rolla_username' => $user->rolla_username,
+                    'photo' => $user->photo,
+                    'follow_date' => $item['date'],
+                    'from' => $item['from'],
                 ];
-            });
+            })->filter(); // remove nulls
 
             return response()->json([
                 'statusCode' => true,
