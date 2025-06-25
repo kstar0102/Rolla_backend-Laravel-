@@ -745,42 +745,90 @@ class UserController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
      */
+    // public function followedUsers(Request $request)
+    // {
+    //     try {
+    //         $validated = $request->validate([
+    //             'user_id' => 'required|integer|exists:users,id',
+    //         ]);
+    
+    //         $user = User::find($validated['user_id']);
+    
+    //         if (!$user) {
+    //             return response()->json([
+    //                 'statusCode' => false,
+    //                 'message' => "User not found",
+    //             ], 404);
+    //         }
+
+    //         $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
+
+    //         if ($usersFollowing->isEmpty()) {
+    //             return response()->json([
+    //                 'statusCode' => false,
+    //                 'message' => "No users following this user",
+    //             ], 404);
+    //         }
+    
+    //         return response()->json([
+    //             'statusCode' => true,
+    //             'message' => "Users found successfully",
+    //             'data' => $usersFollowing,
+    //         ], 200);
+    
+    //         return response()->json([
+    //             'statusCode' => true,
+    //             'message' => $flag ? "User following successfully" : "User unfollowing successfully",
+    //             'data' => $user,
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'statusCode' => false,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
     public function followedUsers(Request $request)
     {
         try {
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
             ]);
-    
+
             $user = User::find($validated['user_id']);
-    
-            if (!$user) {
+
+            if ($user) {
+                $followingData = json_decode($user->followed_user_id, true);
+
+                if (!is_array($followingData)) {
+                    return response()->json([
+                        'statusCode' => false,
+                        'message' => "Invalid followed_user_id format.",
+                    ], 400);
+                }
+
+                $followingIds = collect($followingData)
+                    ->pluck('id')
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                $followingUsers = User::whereIn('id', $followingIds)
+                    ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
+                    ->get();
+
+                return response()->json([
+                    'statusCode' => true,
+                    'message' => "Following users retrieved successfully",
+                    'data' => $followingUsers,
+                ], 200);
+            } else {
                 return response()->json([
                     'statusCode' => false,
                     'message' => "User not found",
                 ], 404);
             }
-
-            $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
-
-            if ($usersFollowing->isEmpty()) {
-                return response()->json([
-                    'statusCode' => false,
-                    'message' => "No users following this user",
-                ], 404);
-            }
-    
-            return response()->json([
-                'statusCode' => true,
-                'message' => "Users found successfully",
-                'data' => $usersFollowing,
-            ], 200);
-    
-            return response()->json([
-                'statusCode' => true,
-                'message' => $flag ? "User following successfully" : "User unfollowing successfully",
-                'data' => $user,
-            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'statusCode' => false,
