@@ -570,18 +570,32 @@ class TripController extends Controller
                         'image_path' => $droppinData['image_path'],
                         'image_caption' => $droppinData['image_caption'] ?? '',
                     ];
+            
                     if (!empty($droppinData['delay_time'])) {
                         $updateData['deley_time'] = $droppinData['delay_time'];
                     }
-
+            
                     if (!empty($droppinData['id'])) {
+                        // If ID is provided, update by ID
                         $droppin = Droppin::find($droppinData['id']);
-                        if ($droppin) $droppin->update($updateData);
+                        if ($droppin) {
+                            $droppin->update($updateData);
+                        }
                     } else {
-                        $trip->droppins()->create($updateData);
+                        // Check if a droppin exists for this trip & stop_index
+                        $existing = Droppin::where('trip_id', $trip->id)
+                            ->where('stop_index', $droppinData['stop_index'])
+                            ->first();
+            
+                        if ($existing) {
+                            $existing->update($updateData);
+                        } else {
+                            $trip->droppins()->create($updateData);
+                        }
                     }
                 }
             }
+            
 
             // Handle Tag Notifications
             if (!empty($request->trip_tags)) {
