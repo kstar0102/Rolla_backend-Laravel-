@@ -297,12 +297,18 @@ class UserController extends Controller
                 ];
             
                 // Add trip ID only if it's a comment notification
-                if ($item['from'] === 'comment' && isset($item['trip'])) {
-                    $base['trip'] = $item['trip'];
+                if ($item['from'] === 'comment' && isset($item['trip_id'])) {
+                    $base['trip_id'] = $item['trip_id'];
                 }
 
                 if ($item['from'] === 'like' && isset($item['likeId'])) {
                     $base['likeid'] = $item['likeId'];
+                    $base['trip_id'] = $item['trip_id'];
+                    $base['stop_index'] = $item['stop_index'];
+                }
+
+                if ($item['from'] === 'tag' && isset($item['trip_id'])) {
+                    $base['trip_id'] = $item['trip_id'];
                 }
             
                 return $base;
