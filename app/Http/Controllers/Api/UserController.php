@@ -231,10 +231,11 @@ class UserController extends Controller
                 ]);
 
             $tagItems = collect(json_decode($user->tag_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->notificationBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
+                    'tripid' => $item->trip_id,
                     'from' => 'tag'
                 ]);
 
@@ -243,19 +244,32 @@ class UserController extends Controller
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
-                    'trip' => $item->tripid,
+                    'tripid' => $item->tripid,
                     'from' => 'comment'
                 ]);
 
+            // $likeItems = collect(json_decode($user->like_notification))
+            //     ->filter(fn($item) => isset($item->id, $item->date, $item->likeid, $item->notificationBool) && $item->notificationBool === false)
+            //     ->map(fn($item) => [
+            //         'id' => intval($item->id),
+            //         'date' => $item->date,
+            //         'likeId' => $item->likeid,
+            //         'from' => 'like'
+            //     ]);
             $likeItems = collect(json_decode($user->like_notification))
                 ->filter(fn($item) => isset($item->id, $item->date, $item->likeid, $item->notificationBool) && $item->notificationBool === false)
-                ->map(fn($item) => [
-                    'id' => intval($item->id),
-                    'date' => $item->date,
-                    'likeId' => $item->likeid,
-                    'from' => 'like'
-                ]);
-
+                ->map(function ($item) {
+                    $droppin = \App\Models\Droppin::find($item->likeid);
+            
+                    return [
+                        'id' => intval($item->id),
+                        'date' => $item->date,
+                        'likeId' => $item->likeid,
+                        'from' => 'like',
+                        'trip_id' => optional($droppin)->trip_id,
+                        'stop_index' => optional($droppin)->stop_index,
+                    ];
+                });
             // Merge all
             $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems)->merge($likeItems);
 
