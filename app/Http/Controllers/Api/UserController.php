@@ -248,28 +248,16 @@ class UserController extends Controller
                     'from' => 'comment'
                 ]);
 
-            // $likeItems = collect(json_decode($user->like_notification))
-            //     ->filter(fn($item) => isset($item->id, $item->date, $item->likeid, $item->notificationBool) && $item->notificationBool === false)
-            //     ->map(fn($item) => [
-            //         'id' => intval($item->id),
-            //         'date' => $item->date,
-            //         'likeId' => $item->likeid,
-            //         'from' => 'like'
-            //     ]);
             $likeItems = collect(json_decode($user->like_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->likeid, $item->notificationBool) && $item->notificationBool === false)
-                ->map(function ($item) {
-                    $droppin = \App\Models\Droppin::find($item->likeid);
-            
-                    return [
-                        'id' => intval($item->id),
-                        'date' => $item->date,
-                        'likeId' => $item->likeid,
-                        'from' => 'like',
-                        'trip_id' => optional($droppin)->trip_id,
-                        'stop_index' => optional($droppin)->stop_index,
-                    ];
-                });
+                ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->likeid, $item->notificationBool) && $item->notificationBool === false)
+                ->map(fn($item) => [
+                    'id' => intval($item->id),
+                    'date' => $item->date,
+                    'likeId' => $item->likeid,
+                    'tripid' => $item->tripid,
+                    'from' => 'like'
+                ]);
+           
             // Merge all
             $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems)->merge($likeItems);
 
@@ -297,18 +285,18 @@ class UserController extends Controller
                 ];
             
                 // Add trip ID only if it's a comment notification
-                if ($item['from'] === 'comment' && isset($item['trip_id'])) {
-                    $base['trip_id'] = $item['trip_id'];
+                if ($item['from'] === 'comment' && isset($item['tripid'])) {
+                    $base['tripid'] = $item['tripid'];
                 }
 
                 if ($item['from'] === 'like' && isset($item['likeId'])) {
                     $base['likeid'] = $item['likeId'];
-                    $base['trip_id'] = $item['trip_id'];
+                    $base['tripid'] = $item['tripid'];
                     $base['stop_index'] = $item['stop_index'];
                 }
 
-                if ($item['from'] === 'tag' && isset($item['trip_id'])) {
-                    $base['trip_id'] = $item['trip_id'];
+                if ($item['from'] === 'tag' && isset($item['tripid'])) {
+                    $base['tripid'] = $item['tripid'];
                 }
             
                 return $base;
@@ -1328,6 +1316,7 @@ class UserController extends Controller
                             'id' => $validated['user_id'],
                             'date' => now()->toDateTimeString(),
                             'likeid' => $droppin->id,
+                            'tripid' => $tripId,
                             'notificationBool' => false,
                         ]);
                     } else {
