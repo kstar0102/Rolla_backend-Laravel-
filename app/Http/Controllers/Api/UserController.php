@@ -57,10 +57,10 @@ class UserController extends Controller
     {
         try {
             $validated = $request->validate([
-                'user_id' => 'required|integer|exists:users,id',
+                'id' => 'required|integer|exists:users,id',
             ]);
 
-            $user = User::find($validated['user_id']);
+            $user = User::find($validated['id']);
 
             if ($user) {
                 $response = [
@@ -200,10 +200,10 @@ class UserController extends Controller
     {
         try {
             $validated = $request->validate([
-                'user_id' => 'required|integer|exists:users,id',
+                'id' => 'required|integer|exists:users,id',
             ]);
 
-            $user = User::find($validated['user_id']);
+            $user = User::find($validated['id']);
 
             if (!$user) {
                 return response()->json([
@@ -235,7 +235,7 @@ class UserController extends Controller
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
-                    'tripid' => $item->trip_id,
+                    'tripId' => $item->trip_id,
                     'from' => 'tag'
                 ]);
 
@@ -244,20 +244,20 @@ class UserController extends Controller
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
-                    'tripid' => $item->tripid,
+                    'trip' => $item->tripid,
                     'from' => 'comment'
                 ]);
 
             $likeItems = collect(json_decode($user->like_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->likeid, $item->notificationBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->likeid, $item->notificationBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'likeId' => $item->likeid,
-                    'tripid' => $item->tripid,
+                    'tripId' => $item->trip_id,
                     'from' => 'like'
                 ]);
-           
+
             // Merge all
             $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems)->merge($likeItems);
 
@@ -285,18 +285,17 @@ class UserController extends Controller
                 ];
             
                 // Add trip ID only if it's a comment notification
-                if ($item['from'] === 'comment' && isset($item['tripid'])) {
-                    $base['tripid'] = $item['tripid'];
+                if ($item['from'] === 'comment' && isset($item['trip'])) {
+                    $base['trip'] = $item['trip'];
+                }
+
+                if ($item['from'] === 'tag' && isset($item['tripId'])) {
+                    $base['tripId'] = $item['tripId'];
                 }
 
                 if ($item['from'] === 'like' && isset($item['likeId'])) {
                     $base['likeid'] = $item['likeId'];
-                    $base['tripid'] = $item['tripid'];
-                    $base['stop_index'] = $item['stop_index'];
-                }
-
-                if ($item['from'] === 'tag' && isset($item['tripid'])) {
-                    $base['tripid'] = $item['tripid'];
+                    $base['tripId'] = $item['likeId'];
                 }
             
                 return $base;
@@ -1316,7 +1315,7 @@ class UserController extends Controller
                             'id' => $validated['user_id'],
                             'date' => now()->toDateTimeString(),
                             'likeid' => $droppin->id,
-                            'tripid' => $tripId,
+                            'trip_id' => $tripId,
                             'notificationBool' => false,
                         ]);
                     } else {
