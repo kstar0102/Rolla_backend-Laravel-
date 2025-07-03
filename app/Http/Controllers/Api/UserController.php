@@ -295,7 +295,7 @@ class UserController extends Controller
 
                 if ($item['from'] === 'like' && isset($item['likeId'])) {
                     $base['likeid'] = $item['likeId'];
-                    $base['tripId'] = $item['likeId'];
+                    $base['tripId'] = $item['tripId'];
                 }
             
                 return $base;
