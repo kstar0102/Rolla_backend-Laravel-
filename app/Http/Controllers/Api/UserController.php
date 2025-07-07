@@ -258,8 +258,16 @@ class UserController extends Controller
                     'from' => 'like'
                 ]);
 
+            $followedItems = collect(json_decode($user->followed_user_id))
+                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool) && $item->notificationBool === false)
+                ->map(fn($item) => [
+                    'id' => intval($item->id),
+                    'date' => $item->date,
+                    'from' => 'followed'
+                ]);
+
             // Merge all
-            $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems)->merge($likeItems);
+            $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems)->merge($likeItems)->merge($followedItems);
 
             // Get unique user IDs
             $allUserIds = $allItems->pluck('id')->unique();
