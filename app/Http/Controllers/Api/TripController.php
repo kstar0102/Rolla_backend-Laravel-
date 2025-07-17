@@ -718,29 +718,35 @@ class TripController extends Controller
                 'droppin_id' => 'required|exists:droppins,id',
                 'user_id' => 'required|exists:users,id',
             ]);
-    
+
             $droppin = Droppin::find($validated['droppin_id']);
-    
+
             if (!$droppin) {
                 return response()->json([
                     'statusCode' => false,
                     'message' => "Droppin not found",
                 ], 404);
             }
-    
-            $likes = $droppin->view_count ? explode(',', $droppin->view_count) : [];
-    
-            if (!in_array($validated['user_id'], $likes)) {
-                $likes[] = $validated['user_id'];
+
+            // Always increment the counter
+            $droppin->viewed_count = ($droppin->viewed_count ?? 0) + 1;
+
+            // Optionally add user to view_count list (if not already present)
+            $viewedUserIds = $droppin->view_count ? explode(',', $droppin->view_count) : [];
+            if (!in_array($validated['user_id'], $viewedUserIds)) {
+                $viewedUserIds[] = $validated['user_id'];
+                $droppin->view_count = implode(',', $viewedUserIds);
             }
-    
-            $droppin->view_count = implode(',', $likes);
+
             $droppin->save();
-    
+
             return response()->json([
                 'statusCode' => true,
                 'message' => "Droppin viewed successfully",
-                'data' => $droppin,
+                'data' => [
+                    'viewed_count' => $droppin->viewed_count,
+                    'viewers' => $viewedUserIds,
+                ],
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -749,4 +755,5 @@ class TripController extends Controller
             ], 500);
         }
     }
+
 }

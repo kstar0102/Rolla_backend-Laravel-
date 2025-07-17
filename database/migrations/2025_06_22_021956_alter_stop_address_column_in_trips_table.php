@@ -14,13 +14,6 @@ return new class extends Migration
         Schema::table('trips', function (Blueprint $table) {
             $table->text('stop_address')->change();
         });
-        // Schema::table('trips', function (Blueprint $table) {
-        //     $table->dropColumn('stop_address');
-        // });
-
-        // Schema::table('users', function (Blueprint $table) {
-        //     $table->text('stop_address')->nullable()->after('start_address');
-        // });
     }
 
     /**

@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->json('like_notification')->nullable()->after('comment_notification');
+        Schema::table('droppins', function (Blueprint $table) {
+            $table->integer('viewed_count')->nullable();
         });
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('like_notification');
+        Schema::table('droppins', function (Blueprint $table) {
+            $table->dropColumn('viewed_count');
         });
     }
 };
