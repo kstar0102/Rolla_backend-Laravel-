@@ -808,10 +808,10 @@ class UserController extends Controller
     {
         try {
             $validated = $request->validate([
-                'user_id' => 'required|integer|exists:users,id',
+                'id' => 'required|integer|exists:users,id',
             ]);
 
-            $user = User::find($validated['user_id']);
+            $user = User::find($validated['id']);
 
             if ($user) {
                 $followingData = json_decode($user->followed_user_id, true);
@@ -820,6 +820,7 @@ class UserController extends Controller
                     return response()->json([
                         'statusCode' => false,
                         'message' => "Invalid followed_user_id format.",
+                        'data' => $followingData
                     ], 400);
                 }
 
