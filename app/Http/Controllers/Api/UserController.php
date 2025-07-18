@@ -214,11 +214,12 @@ class UserController extends Controller
 
             // --- From pending list ---
             $pendingItems = collect(json_decode($user->following_pending_userid))
-                ->filter(fn($item) => isset($item->id, $item->date))
+                ->filter(fn($item) => isset($item->id, $item->date, $item->viewedBool))
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
-                    'from' => 'pending'
+                    'from' => 'pending',
+                    'viewed' => $item->viewedBool
                 ]);
 
             // --- From following_user_id with notificationBool === false ---
@@ -227,7 +228,8 @@ class UserController extends Controller
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
-                    'from' => 'follow'
+                    'from' => 'follow',
+                    'viewed' => $item->viewedBool
                 ]);
 
             $tagItems = collect(json_decode($user->tag_notification))
@@ -236,7 +238,8 @@ class UserController extends Controller
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'tripId' => $item->trip_id,
-                    'from' => 'tag'
+                    'from' => 'tag',
+                    'viewed' => $item->viewedBool
                 ]);
 
             $commentItems = collect(json_decode($user->comment_notification))
@@ -245,7 +248,8 @@ class UserController extends Controller
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'trip' => $item->tripid,
-                    'from' => 'comment'
+                    'from' => 'comment',
+                    'viewed' => $item->viewedBool
                 ]);
 
             $likeItems = collect(json_decode($user->like_notification))
@@ -255,7 +259,8 @@ class UserController extends Controller
                     'date' => $item->date,
                     'likeId' => $item->likeid,
                     'tripId' => $item->trip_id,
-                    'from' => 'like'
+                    'from' => 'like',
+                    'viewed' => $item->viewedBool
                 ]);
 
             $followedItems = collect(json_decode($user->followed_user_id))
@@ -263,7 +268,8 @@ class UserController extends Controller
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
-                    'from' => 'followed'
+                    'from' => 'followed',
+                    'viewed' => $item->viewedBool
                 ]);
 
             // Merge all
@@ -290,6 +296,7 @@ class UserController extends Controller
                     'photo' => $user->photo,
                     'follow_date' => $item['date'],
                     'from' => $item['from'],
+                    'viewed' => $item['viewed'],
                 ];
             
                 // Add trip ID only if it's a comment notification
