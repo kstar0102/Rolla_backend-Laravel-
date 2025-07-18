@@ -47,23 +47,6 @@ class CommentController extends Controller
         try {
             DB::beginTransaction();
 
-            // $comment = Comments::where('trip_id', $request->trip_id)
-            //     ->where('user_id', $request->user_id)
-            //     ->first();
-
-            // if ($comment) {
-            //     $comment->content = $request->content;
-            //     $comment->save();
-            //     $message = 'Comment updated successfully';
-            // } else {
-            //     $comment = Comments::create([
-            //         'trip_id' => $request->trip_id,
-            //         'user_id' => $request->user_id,
-            //         'content' => $request->content,
-            //     ]);
-            //     $message = 'Comment added successfully';
-            // }
-
             // Always create a new comment
             $comment = Comments::create([
                 'trip_id' => $request->trip_id,
@@ -91,6 +74,7 @@ class CommentController extends Controller
                 'date' => Carbon::now()->toDateTimeString(),
                 'tripid' => $request->trip_id,
                 'notificationBool' => false,
+                'viewedBool' => false,
             ];
 
             // Update user with new notifications

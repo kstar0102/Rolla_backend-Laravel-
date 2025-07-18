@@ -387,6 +387,49 @@ class UserController extends Controller
         }
     }
 
+    public function viewedTagNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'tag_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $notifications = collect(json_decode($user->tag_notification)) ?? collect();
+
+            $updatedNotifications = $notifications->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['tag_id']) {
+                    $item->viewedBool = true;
+                }
+                return $item;
+            });
+
+            $user->tag_notification = $updatedNotifications->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "viewed tag notification",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function markTagNotificationAsRead(Request $request)
     {
         try {
@@ -419,6 +462,60 @@ class UserController extends Controller
             return response()->json([
                 'statusCode' => true,
                 'message' => "Tag notification marked as read",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function viewedCommentNotification (Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'commenter_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $notifications = collect(json_decode($user->comment_notification)) ?? collect();
+
+            $matchFound = $notifications->contains(function ($item) use ($validated) {
+                return isset($item->id) && $item->id == $validated['commenter_id'];
+            });
+    
+            if (!$matchFound) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "No matching like notification found for this commenter_id",
+                ], 404);
+            };
+
+            $updatedNotifications = $notifications->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['commenter_id']) {
+                    $item->viewedBool = true;
+                }
+                return $item;
+            });
+
+            $user->comment_notification = $updatedNotifications->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Comment notification(s) marked as read",
                 'data' => $user,
             ], 200);
 
@@ -484,12 +581,12 @@ class UserController extends Controller
         }
     }
 
-    public function markLikeNotificationAsRead(Request $request)
+    public function viewedLikeNotification(Request $request)
     {
         try {
             $validated = $request->validate([
-                'user_id' => 'required|integer|exists:users,id',   // receiver
-                'like_id' => 'required|integer|exists:users,id',   // liker
+                'user_id' => 'required|integer|exists:users,id', 
+                'like_id' => 'required|integer|exists:users,id', 
             ]);
 
             $user = User::find($validated['user_id']);
@@ -516,7 +613,7 @@ class UserController extends Controller
 
             $updatedNotifications = $notifications->map(function ($item) use ($validated) {
                 if (isset($item->id) && $item->id == $validated['like_id']) {
-                    $item->notificationBool = true; // ✅ Mark as read
+                    $item->viewedBool = true;
                 }
                 return $item;
             });
@@ -538,6 +635,102 @@ class UserController extends Controller
         }
     }
 
+    public function markLikeNotificationAsRead(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id', 
+                'like_id' => 'required|integer|exists:users,id', 
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $notifications = collect(json_decode($user->like_notification)) ?? collect();
+            
+            $matchFound = $notifications->contains(function ($item) use ($validated) {
+                return isset($item->id) && $item->id == $validated['like_id'];
+            });
+    
+            if (!$matchFound) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "No matching like notification found for this like_id",
+                ], 404);
+            };
+
+            $updatedNotifications = $notifications->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['like_id']) {
+                    $item->notificationBool = true;
+                }
+                return $item;
+            });
+
+            $user->like_notification = $updatedNotifications->values()->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Like notification(s) marked as read",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function viewedFollowingNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'following_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $followList = collect(json_decode($user->following_user_id)) ?? collect();
+
+            $updatedList = $followList->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['following_id']) {
+                    $item->viewedBool = true;
+                }
+                return $item;
+            });
+
+            $user->following_user_id = $updatedList->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Notification marked as sent",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
     public function markFollowNotificationAsSent(Request $request)
     {
@@ -582,13 +775,92 @@ class UserController extends Controller
         }
     }
 
+    public function viewedFollowPendingNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'followpending_id' => 'required|integer|exists:users,id',
+            ]);
 
-    /**
-     * Block User
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
-     */
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $followList = collect(json_decode($user->following_pending_userid)) ?? collect();
+
+            $updatedList = $followList->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['following_id']) {
+                    $item->viewedBool = true;
+                }
+                return $item;
+            });
+
+            $user->following_pending_userid = $updatedList->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Notification marked as sent",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function viewedFollowedNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'followed_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $followList = collect(json_decode($user->followed_user_id)) ?? collect();
+
+            $updatedList = $followList->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['following_id']) {
+                    $item->viewedBool = true;
+                }
+                return $item;
+            });
+
+            $user->followed_user_id = $updatedList->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Notification marked as sent",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function blockUser(Request $request)
     {
         try {
@@ -1070,6 +1342,7 @@ class UserController extends Controller
                 $pending[] = [
                     'id' => $validated['following_id'],
                     'date' => now()->toDateTimeString(),
+                    'viewedBool' => false,
                 ];
                 $user->following_pending_userid = json_encode($pending);
                 $user->save();
@@ -1133,6 +1406,7 @@ class UserController extends Controller
                     'id' => $validated['following_id'],
                     'date' => Carbon::now()->toIso8601String(),
                     'notificationBool' => false,
+                    'viewedBool' => false,
                 ];
                 $user->following_user_id = json_encode($followingList);
             }
@@ -1148,6 +1422,7 @@ class UserController extends Controller
                     'id' => $validated['user_id'],
                     'date' => Carbon::now()->toIso8601String(),
                     'notificationBool' => false,
+                    'viewedBool' => false,
                 ];
                 $followedUser->followed_user_id = json_encode($followedList);
             }
@@ -1326,6 +1601,7 @@ class UserController extends Controller
                             'likeid' => $droppin->id,
                             'trip_id' => $tripId,
                             'notificationBool' => false,
+                            'viewedBool' => false,
                         ]);
                     } else {
                         // Remove notification from that user and droppin
