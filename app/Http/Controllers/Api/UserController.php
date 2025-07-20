@@ -224,7 +224,7 @@ class UserController extends Controller
 
             // --- From following_user_id with notificationBool === false ---
             $followItems = collect(json_decode($user->following_user_id))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
@@ -233,7 +233,7 @@ class UserController extends Controller
                 ]);
 
             $tagItems = collect(json_decode($user->tag_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->notificationBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
@@ -243,7 +243,7 @@ class UserController extends Controller
                 ]);
 
             $commentItems = collect(json_decode($user->comment_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->notificationBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
@@ -253,7 +253,7 @@ class UserController extends Controller
                 ]);
 
             $likeItems = collect(json_decode($user->like_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->likeid, $item->notificationBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->likeid, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
@@ -264,7 +264,7 @@ class UserController extends Controller
                 ]);
 
             $followedItems = collect(json_decode($user->followed_user_id))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
@@ -802,7 +802,7 @@ class UserController extends Controller
             $followList = collect(json_decode($user->following_pending_userid)) ?? collect();
 
             $updatedList = $followList->map(function ($item) use ($validated) {
-                if (isset($item->id) && $item->id == $validated['following_id']) {
+                if (isset($item->id) && $item->id == $validated['followpending_id']) {
                     $item->viewedBool = true;
                 }
                 return $item;
@@ -845,7 +845,7 @@ class UserController extends Controller
             $followList = collect(json_decode($user->followed_user_id)) ?? collect();
 
             $updatedList = $followList->map(function ($item) use ($validated) {
-                if (isset($item->id) && $item->id == $validated['following_id']) {
+                if (isset($item->id) && $item->id == $validated['followed_id']) {
                     $item->viewedBool = true;
                 }
                 return $item;
