@@ -314,7 +314,10 @@ class UserController extends Controller
                 }
             
                 return $base;
-            })->filter()->sortByDesc('follow_date')->values();
+            })
+            ->filter()
+            ->sortBy([['viewed', 'asc'], ['follow_date', 'desc']])
+            ->values();
             
 
             return response()->json([
