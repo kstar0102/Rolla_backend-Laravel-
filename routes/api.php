@@ -47,10 +47,12 @@ Route::group(['prefix' => 'user'], static function () {
     Route::post('requestfollow', [UserController::class, 'requestToFollowUser']);
     Route::post('acceptfollow', [UserController::class, 'acceptFollowRequest']);
     Route::post('block', [UserController::class, 'blockUser']);
+
     Route::delete('delete', [UserController::class, 'deleteUserAccount']);
     Route::post('accpetViewed', [UserController::class, 'markFollowNotificationAsSent']);
     Route::post('tapviewed', [UserController::class, 'markTagNotificationAsRead']);
     Route::post('commentviewed', [UserController::class, 'markCommentNotificationAsRead']);
+    Route::post('tapfollowedUser', [UserController::class, 'closeFollowedUser']);
     
     Route::post('viewedlikenotification', [UserController::class, 'viewedLikeNotification']);
     Route::post('viewedcommentnotification', [UserController::class, 'viewedCommentNotification']);

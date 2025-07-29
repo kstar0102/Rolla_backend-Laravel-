@@ -440,6 +440,60 @@ class UserController extends Controller
         }
     }
 
+    public function closeFollowedUser(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'followed_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $followeds = collect(json_decode($user->followed_user_id)) ?? collect();
+
+            $found = false;
+
+            $updatedNotifications = $followeds->map(function ($item) use ($validated, &$found) {
+                if (isset($item->id) && $item->id == $validated['followed_id']) {
+                    $item->notificationBool = true;
+                    $found = true;
+                }
+                return $item;
+            });
+
+            if (!$found) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "Followed ID not found in user's followed list",
+                ], 404);
+            }
+
+            $user->followed_user_id = $updatedNotifications->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Taped followed id",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
     public function markTagNotificationAsRead(Request $request)
     {
         try {
