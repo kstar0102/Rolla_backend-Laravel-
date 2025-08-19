@@ -196,6 +196,144 @@ class UserController extends Controller
         }
     }
 
+    // public function getNotificationUsers(Request $request)
+    // {
+    //     try {
+    //         $validated = $request->validate([
+    //             'id' => 'required|integer|exists:users,id',
+    //         ]);
+
+    //         $user = User::find($validated['id']);
+
+    //         if (!$user) {
+    //             return response()->json([
+    //                 'statusCode' => false,
+    //                 'message' => "User not found",
+    //             ], 404);
+    //         }
+
+    //         // --- From pending list ---
+    //         $pendingItems = collect(json_decode($user->following_pending_userid))
+    //             ->filter(fn($item) => isset($item->id, $item->date, $item->viewedBool))
+    //             ->map(fn($item) => [
+    //                 'id' => intval($item->id),
+    //                 'date' => $item->date,
+    //                 'from' => 'pending',
+    //                 'viewed' => $item->viewedBool
+    //             ]);
+
+    //         // --- From following_user_id with notificationBool === false ---
+    //         $followItems = collect(json_decode($user->following_user_id))
+    //             ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+    //             ->map(fn($item) => [
+    //                 'id' => intval($item->id),
+    //                 'date' => $item->date,
+    //                 'from' => 'follow',
+    //                 'viewed' => $item->viewedBool
+    //             ]);
+
+    //         $tagItems = collect(json_decode($user->tag_notification))
+    //             ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+    //             ->map(fn($item) => [
+    //                 'id' => intval($item->id),
+    //                 'date' => $item->date,
+    //                 'tripId' => $item->trip_id,
+    //                 'from' => 'tag',
+    //                 'viewed' => $item->viewedBool
+    //             ]);
+
+    //         $commentItems = collect(json_decode($user->comment_notification))
+    //             ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+    //             ->map(fn($item) => [
+    //                 'id' => intval($item->id),
+    //                 'date' => $item->date,
+    //                 'trip' => $item->tripid,
+    //                 'from' => 'comment',
+    //                 'viewed' => $item->viewedBool
+    //             ]);
+
+    //         $likeItems = collect(json_decode($user->like_notification))
+    //             ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->likeid, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+    //             ->map(fn($item) => [
+    //                 'id' => intval($item->id),
+    //                 'date' => $item->date,
+    //                 'likeId' => $item->likeid,
+    //                 'tripId' => $item->trip_id,
+    //                 'from' => 'like',
+    //                 'viewed' => $item->viewedBool
+    //             ]);
+
+    //         $followedItems = collect(json_decode($user->followed_user_id))
+    //             ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+    //             ->map(fn($item) => [
+    //                 'id' => intval($item->id),
+    //                 'date' => $item->date,
+    //                 'from' => 'followed',
+    //                 'viewed' => $item->viewedBool
+    //             ]);
+
+    //         // Merge all
+    //         $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems)->merge($likeItems)->merge($followedItems);
+
+    //         // Get unique user IDs
+    //         $allUserIds = $allItems->pluck('id')->unique();
+
+    //         // Get user details
+    //         $fetchedUsers = User::whereIn('id', $allUserIds)
+    //             ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
+    //             ->get();
+
+    //         // Merge extra info
+    //         $finalResult = $allItems->map(function ($item) use ($fetchedUsers) {
+    //             $user = $fetchedUsers->firstWhere('id', $item['id']);
+    //             if (!$user) return null;
+            
+    //             $base = [
+    //                 'id' => $user->id,
+    //                 'first_name' => $user->first_name,
+    //                 'last_name' => $user->last_name,
+    //                 'rolla_username' => $user->rolla_username,
+    //                 'photo' => $user->photo,
+    //                 'follow_date' => $item['date'],
+    //                 'from' => $item['from'],
+    //                 'viewed' => $item['viewed'],
+    //             ];
+            
+    //             // Add trip ID only if it's a comment notification
+    //             if ($item['from'] === 'comment' && isset($item['trip'])) {
+    //                 $base['trip'] = $item['trip'];
+    //             }
+
+    //             if ($item['from'] === 'tag' && isset($item['tripId'])) {
+    //                 $base['tripId'] = $item['tripId'];
+    //             }
+
+    //             if ($item['from'] === 'like' && isset($item['likeId'])) {
+    //                 $base['likeid'] = $item['likeId'];
+    //                 $base['tripId'] = $item['tripId'];
+    //             }
+            
+    //             return $base;
+    //         })
+    //         ->filter()
+    //         ->sortBy([['viewed', 'asc'], ['follow_date', 'desc']])
+    //         ->values();
+            
+
+    //         return response()->json([
+    //             'statusCode' => true,
+    //             'message' => "Users retrieved successfully",
+    //             'data' => $finalResult,
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'statusCode' => false,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
     public function getNotificationUsers(Request $request)
     {
         try {
@@ -273,57 +411,113 @@ class UserController extends Controller
                 ]);
 
             // Merge all
-            $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems)->merge($likeItems)->merge($followedItems);
+            $allItems = $pendingItems
+                ->merge($followItems)
+                ->merge($tagItems)
+                ->merge($commentItems)
+                ->merge($likeItems)
+                ->merge($followedItems);
 
             // Get unique user IDs
-            $allUserIds = $allItems->pluck('id')->unique();
+            $allUserIds = $allItems->pluck('id')->unique()->values();
 
             // Get user details
             $fetchedUsers = User::whereIn('id', $allUserIds)
                 ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
                 ->get();
 
-            // Merge extra info
+            /**
+             * PRUNE NOTIFICATIONS THAT REFERENCE DELETED USERS
+             * Any ID in $allUserIds that is NOT in $fetchedUsers is considered deleted.
+             * Remove those entries from all related JSON fields and persist.
+             */
+            $missingIds = $allUserIds->diff($fetchedUsers->pluck('id'));
+            if ($missingIds->isNotEmpty()) {
+                $missingIdSet = $missingIds->values(); // Collection of ints
+
+                $prune = function ($json) use ($missingIdSet) {
+                    // decode safely to associative array
+                    $arr = json_decode($json ?? '[]', true);
+                    if (!is_array($arr)) {
+                        $arr = [];
+                    }
+                    $filtered = array_values(array_filter($arr, function ($item) use ($missingIdSet) {
+                        // keep if it has no 'id' (malformed) OR id not in missing set
+                        $id = isset($item['id']) ? (int)$item['id'] : null;
+                        return $id === null || !$missingIdSet->contains($id);
+                    }));
+                    return json_encode($filtered, JSON_UNESCAPED_UNICODE);
+                };
+
+                $dirty = false;
+                $new_following_pending_userid = $prune($user->following_pending_userid);
+                $dirty = $dirty || $new_following_pending_userid !== $user->following_pending_userid;
+                $user->following_pending_userid = $new_following_pending_userid;
+
+                $new_following_user_id = $prune($user->following_user_id);
+                $dirty = $dirty || $new_following_user_id !== $user->following_user_id;
+                $user->following_user_id = $new_following_user_id;
+
+                $new_tag_notification = $prune($user->tag_notification);
+                $dirty = $dirty || $new_tag_notification !== $user->tag_notification;
+                $user->tag_notification = $new_tag_notification;
+
+                $new_comment_notification = $prune($user->comment_notification);
+                $dirty = $dirty || $new_comment_notification !== $user->comment_notification;
+                $user->comment_notification = $new_comment_notification;
+
+                $new_like_notification = $prune($user->like_notification);
+                $dirty = $dirty || $new_like_notification !== $user->like_notification;
+                $user->like_notification = $new_like_notification;
+
+                $new_followed_user_id = $prune($user->followed_user_id);
+                $dirty = $dirty || $new_followed_user_id !== $user->followed_user_id;
+                $user->followed_user_id = $new_followed_user_id;
+
+                if ($dirty) {
+                    $user->save();
+                }
+            }
+
+            // Merge extra info for response (already ignores missing users)
             $finalResult = $allItems->map(function ($item) use ($fetchedUsers) {
-                $user = $fetchedUsers->firstWhere('id', $item['id']);
-                if (!$user) return null;
-            
+                $u = $fetchedUsers->firstWhere('id', $item['id']);
+                if (!$u) return null;
+
                 $base = [
-                    'id' => $user->id,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
-                    'rolla_username' => $user->rolla_username,
-                    'photo' => $user->photo,
+                    'id' => $u->id,
+                    'first_name' => $u->first_name,
+                    'last_name' => $u->last_name,
+                    'rolla_username' => $u->rolla_username,
+                    'photo' => $u->photo,
                     'follow_date' => $item['date'],
                     'from' => $item['from'],
                     'viewed' => $item['viewed'],
                 ];
-            
-                // Add trip ID only if it's a comment notification
+
                 if ($item['from'] === 'comment' && isset($item['trip'])) {
                     $base['trip'] = $item['trip'];
                 }
-
                 if ($item['from'] === 'tag' && isset($item['tripId'])) {
                     $base['tripId'] = $item['tripId'];
                 }
-
-                if ($item['from'] === 'like' && isset($item['likeId'])) {
-                    $base['likeid'] = $item['likeId'];
-                    $base['tripId'] = $item['tripId'];
+                if ($item['from'] === 'like') {
+                    if (isset($item['likeId'])) $base['likeid'] = $item['likeId'];
+                    if (isset($item['tripId'])) $base['tripId'] = $item['tripId'];
                 }
-            
+
                 return $base;
             })
             ->filter()
             ->sortBy([['viewed', 'asc'], ['follow_date', 'desc']])
             ->values();
-            
 
             return response()->json([
                 'statusCode' => true,
                 'message' => "Users retrieved successfully",
                 'data' => $finalResult,
+                // Optional: return which IDs were pruned this call
+                // 'pruned_user_ids' => $missingIds->values(),
             ], 200);
 
         } catch (\Exception $e) {
@@ -333,6 +527,7 @@ class UserController extends Controller
             ], 500);
         }
     }
+
 
 
     public function getPendingFollowingUsers(Request $request)
