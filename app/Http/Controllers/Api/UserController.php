@@ -1751,12 +1751,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Add a like to a droppin by a user.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
-     */
     // public function droppinLike(Request $request)
     // {
     //     try {
@@ -1765,9 +1759,9 @@ class UserController extends Controller
     //             'droppin_id' => 'required|integer|exists:droppins,id',
     //             'flag' => 'required|boolean',
     //         ]);
-    
+
     //         $droppin = Droppin::find($validated['droppin_id']);
-    
+
     //         if (!$droppin) {
     //             return response()->json([
     //                 'statusCode' => false,
@@ -1775,8 +1769,9 @@ class UserController extends Controller
     //             ], 404);
     //         }
 
+    //         // 💡 Handle like/unlike logic
     //         $likes = $droppin->likes_user_id ? explode(',', $droppin->likes_user_id) : [];
-    
+
     //         if ($validated['flag']) {
     //             if (!in_array($validated['user_id'], $likes)) {
     //                 $likes[] = $validated['user_id'];
@@ -1786,10 +1781,49 @@ class UserController extends Controller
     //                 $likes = array_diff($likes, [$validated['user_id']]);
     //             }
     //         }
-            
+
     //         $droppin->likes_user_id = implode(',', $likes);
     //         $droppin->save();
-    
+
+    //         // 💡 Get target user (owner of the trip related to the droppin)
+    //         $tripId = DB::table('droppins')
+    //             ->where('id', $validated['droppin_id'])
+    //             ->value('trip_id');
+
+    //         $tripOwnerId = DB::table('trips')
+    //             ->where('id', $tripId)
+    //             ->value('user_id');
+
+    //         if ($tripOwnerId) {
+    //             $tripOwner = User::find($tripOwnerId);
+
+    //             if ($tripOwner) {
+    //                 $notifications = collect(json_decode($tripOwner->like_notification)) ?? collect();
+
+    //                 if ($validated['flag']) {
+    //                     // Add new notification
+    //                     $notifications->push([
+    //                         'id' => $validated['user_id'],
+    //                         'date' => now()->toDateTimeString(),
+    //                         'likeid' => $droppin->id,
+    //                         'trip_id' => $tripId,
+    //                         'notificationBool' => false,
+    //                         'viewedBool' => false,
+    //                     ]);
+    //                 } else {
+    //                     // Remove notification from that user and droppin
+    //                     $notifications = $notifications->reject(function ($item) use ($validated, $droppin) {
+    //                         return isset($item->id, $item->likeid) &&
+    //                             $item->id == $validated['user_id'] &&
+    //                             $item->likeid == $droppin->id;
+    //                     });
+    //                 }
+
+    //                 $tripOwner->like_notification = $notifications->values()->toJson();
+    //                 $tripOwner->save();
+    //             }
+    //         }
+
     //         return response()->json([
     //             'statusCode' => true,
     //             'message' => $validated['flag'] ? "Droppin liked successfully" : "Droppin unliked successfully",
@@ -1801,93 +1835,109 @@ class UserController extends Controller
     //             'message' => $e->getMessage(),
     //         ], 500);
     //     }
-    // }    
+    // }
 
     public function droppinLike(Request $request)
     {
         try {
             $validated = $request->validate([
-                'user_id' => 'required|integer|exists:users,id',
+                'user_id'    => 'required|integer|exists:users,id',
                 'droppin_id' => 'required|integer|exists:droppins,id',
-                'flag' => 'required|boolean',
+                'flag'       => 'required|boolean', // true = like, false = unlike
             ]);
 
-            $droppin = Droppin::find($validated['droppin_id']);
+            $notified = false;
+
+            DB::beginTransaction();
+
+            // Lock droppin row while updating likes
+            $droppin = Droppin::where('id', $validated['droppin_id'])->lockForUpdate()->first();
 
             if (!$droppin) {
+                DB::rollBack();
                 return response()->json([
                     'statusCode' => false,
-                    'message' => "Droppin not found",
+                    'message'    => "Droppin not found",
                 ], 404);
             }
 
-            // 💡 Handle like/unlike logic
-            $likes = $droppin->likes_user_id ? explode(',', $droppin->likes_user_id) : [];
+            // Parse and update likes list
+            $likes = $droppin->likes_user_id
+                ? array_values(array_filter(explode(',', $droppin->likes_user_id), fn ($v) => $v !== ''))
+                : [];
+
+            $uidStr = (string) $validated['user_id'];
 
             if ($validated['flag']) {
-                if (!in_array($validated['user_id'], $likes)) {
-                    $likes[] = $validated['user_id'];
+                if (!in_array($uidStr, $likes, true)) {
+                    $likes[] = $uidStr;
                 }
             } else {
-                if (in_array($validated['user_id'], $likes)) {
-                    $likes = array_diff($likes, [$validated['user_id']]);
-                }
+                $likes = array_values(array_diff($likes, [$uidStr]));
             }
 
             $droppin->likes_user_id = implode(',', $likes);
             $droppin->save();
 
-            // 💡 Get target user (owner of the trip related to the droppin)
-            $tripId = DB::table('droppins')
-                ->where('id', $validated['droppin_id'])
-                ->value('trip_id');
+            // Get trip owner
+            $tripId = $droppin->trip_id;
+            $tripOwnerId = DB::table('trips')->where('id', $tripId)->value('user_id');
 
-            $tripOwnerId = DB::table('trips')
-                ->where('id', $tripId)
-                ->value('user_id');
+            // Only notify if liker is NOT the trip owner
+            $shouldNotify = $tripOwnerId && ((int)$tripOwnerId !== (int)$validated['user_id']);
 
-            if ($tripOwnerId) {
-                $tripOwner = User::find($tripOwnerId);
+            if ($shouldNotify) {
+                // Lock owner row while updating notification JSON
+                $ownerRow = DB::table('users')->where('id', $tripOwnerId)->lockForUpdate()->first();
+                $existingJson = $ownerRow?->like_notification ?? null;
+                $notifications = $existingJson ? json_decode($existingJson, true) : [];
 
-                if ($tripOwner) {
-                    $notifications = collect(json_decode($tripOwner->like_notification)) ?? collect();
-
-                    if ($validated['flag']) {
-                        // Add new notification
-                        $notifications->push([
-                            'id' => $validated['user_id'],
-                            'date' => now()->toDateTimeString(),
-                            'likeid' => $droppin->id,
-                            'trip_id' => $tripId,
-                            'notificationBool' => false,
-                            'viewedBool' => false,
-                        ]);
-                    } else {
-                        // Remove notification from that user and droppin
-                        $notifications = $notifications->reject(function ($item) use ($validated, $droppin) {
-                            return isset($item->id, $item->likeid) &&
-                                $item->id == $validated['user_id'] &&
-                                $item->likeid == $droppin->id;
-                        });
-                    }
-
-                    $tripOwner->like_notification = $notifications->values()->toJson();
-                    $tripOwner->save();
+                if ($validated['flag']) {
+                    // Add notification on like
+                    $notifications[] = [
+                        'id'               => (int) $validated['user_id'],
+                        'date'             => now()->toDateTimeString(),
+                        'likeid'           => (int) $droppin->id,
+                        'trip_id'          => (int) $tripId,
+                        'notificationBool' => false,
+                        'viewedBool'       => false,
+                    ];
+                    $notified = true;
+                } else {
+                    // Remove any existing notification for this user + droppin on unlike
+                    $notifications = array_values(array_filter(
+                        $notifications,
+                        fn ($n) => !(
+                            isset($n['id'], $n['likeid']) &&
+                            (int)$n['id'] === (int)$validated['user_id'] &&
+                            (int)$n['likeid'] === (int)$droppin->id
+                        )
+                    ));
                 }
+
+                DB::table('users')
+                    ->where('id', $tripOwnerId)
+                    ->update(['like_notification' => json_encode($notifications)]);
             }
+
+            DB::commit();
 
             return response()->json([
                 'statusCode' => true,
-                'message' => $validated['flag'] ? "Droppin liked successfully" : "Droppin unliked successfully",
-                'data' => $droppin,
+                'message'    => $validated['flag'] ? "Droppin liked successfully" : "Droppin unliked successfully",
+                'data'       => $droppin,
+                'notified'   => $notified, // helpful for the client
             ], 200);
+
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'statusCode' => false,
-                'message' => $e->getMessage(),
+                'message'    => $e->getMessage(),
             ], 500);
         }
     }
+
 
 
     /**

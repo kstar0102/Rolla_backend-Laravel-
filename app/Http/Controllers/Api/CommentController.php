@@ -28,7 +28,7 @@ class CommentController extends Controller
     public function __construct()
     {
     }
-
+    
     public function createOrUpdateComment(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -36,61 +36,65 @@ class CommentController extends Controller
             'user_id' => 'required|exists:users,id',
             'content' => 'required|string|max:1000',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation errors',
                 'errors' => $validator->errors(),
             ], 422);
         }
-
+    
         try {
             DB::beginTransaction();
-
-            // Always create a new comment
+    
+            // Always create the comment
             $comment = Comments::create([
                 'trip_id' => $request->trip_id,
                 'user_id' => $request->user_id,
                 'content' => $request->content,
             ]);
-
-            $message = 'Comment added successfully';
-            
-            // Get trip owner ID
+    
+            // Get the trip owner
             $tripOwnerId = DB::table('trips')
                 ->where('id', $request->trip_id)
                 ->value('user_id');
-
-            // Fetch existing notifications
-            $existingNotificationsJson = DB::table('users')
-                ->where('id', $tripOwnerId)
-                ->value('comment_notification');
-
-            $notifications = $existingNotificationsJson ? json_decode($existingNotificationsJson, true) : [];
-
-            // Append new notification
-            $notifications[] = [
-                'id' => $request->user_id, // Commenting user
-                'date' => Carbon::now()->toDateTimeString(),
-                'tripid' => $request->trip_id,
-                'notificationBool' => false,
-                'viewedBool' => false,
-            ];
-
-            // Update user with new notifications
-            DB::table('users')
-                ->where('id', $tripOwnerId)
-                ->update([
-                    'comment_notification' => json_encode($notifications),
-                ]);
-
+    
+            // Only notify if the commenter is NOT the trip owner
+            $shouldNotify = ((int)$tripOwnerId !== (int)$request->user_id);
+    
+            if ($shouldNotify) {
+                // Lock the user row to avoid lost updates on the JSON field
+                $userRow = DB::table('users')
+                    ->where('id', $tripOwnerId)
+                    ->lockForUpdate()
+                    ->first();
+    
+                $existingNotificationsJson = $userRow->comment_notification ?? null;
+                $notifications = $existingNotificationsJson ? json_decode($existingNotificationsJson, true) : [];
+    
+                $notifications[] = [
+                    'id' => (int)$request->user_id, // commenting user
+                    'date' => Carbon::now()->toDateTimeString(),
+                    'tripid' => (int)$request->trip_id,
+                    'notificationBool' => false,
+                    'viewedBool' => false,
+                ];
+    
+                DB::table('users')
+                    ->where('id', $tripOwnerId)
+                    ->update([
+                        'comment_notification' => json_encode($notifications),
+                    ]);
+            }
+    
             DB::commit();
-
+    
             return response()->json([
-                'message' => $message,
+                'message' => 'Comment added successfully',
                 'comment' => $comment,
+                'notified' => $shouldNotify, // helpful flag for the client
             ], 200);
-
+    
         } catch (QueryException $qe) {
             DB::rollBack();
             return response()->json([
@@ -105,4 +109,5 @@ class CommentController extends Controller
             ], 500);
         }
     }
+    
 }

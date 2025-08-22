@@ -713,12 +713,56 @@ class TripController extends Controller
         }
     }    
     
+    // public function droppinViewed(Request $request)
+    // {
+    //     try {
+    //         $validated = $request->validate([
+    //             'droppin_id' => 'required|exists:droppins,id',
+    //             'user_id' => 'required|exists:users,id',
+    //         ]);
+
+    //         $droppin = Droppin::find($validated['droppin_id']);
+
+    //         if (!$droppin) {
+    //             return response()->json([
+    //                 'statusCode' => false,
+    //                 'message' => "Droppin not found",
+    //             ], 404);
+    //         }
+
+    //         // Always increment the counter
+    //         $droppin->viewed_count = ($droppin->viewed_count ?? 0) + 1;
+
+    //         // Optionally add user to view_count list (if not already present)
+    //         $viewedUserIds = $droppin->view_count ? explode(',', $droppin->view_count) : [];
+    //         if (!in_array($validated['user_id'], $viewedUserIds)) {
+    //             $viewedUserIds[] = $validated['user_id'];
+    //             $droppin->view_count = implode(',', $viewedUserIds);
+    //         }
+
+    //         $droppin->save();
+
+    //         return response()->json([
+    //             'statusCode' => true,
+    //             'message' => "Droppin viewed successfully",
+    //             'data' => [
+    //                 'viewed_count' => $droppin->viewed_count,
+    //                 'viewers' => $viewedUserIds,
+    //             ],
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'statusCode' => false,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function droppinViewed(Request $request)
     {
         try {
             $validated = $request->validate([
                 'droppin_id' => 'required|exists:droppins,id',
-                'user_id' => 'required|exists:users,id',
+                'user_id'    => 'required|exists:users,id',
             ]);
 
             $droppin = Droppin::find($validated['droppin_id']);
@@ -726,36 +770,45 @@ class TripController extends Controller
             if (!$droppin) {
                 return response()->json([
                     'statusCode' => false,
-                    'message' => "Droppin not found",
+                    'message'    => "Droppin not found",
                 ], 404);
             }
 
-            // Always increment the counter
+            // increment the counter
             $droppin->viewed_count = ($droppin->viewed_count ?? 0) + 1;
 
-            // Optionally add user to view_count list (if not already present)
-            $viewedUserIds = $droppin->view_count ? explode(',', $droppin->view_count) : [];
-            if (!in_array($validated['user_id'], $viewedUserIds)) {
-                $viewedUserIds[] = $validated['user_id'];
-                $droppin->view_count = implode(',', $viewedUserIds);
-            }
+            // append the viewer EVERY time (no uniqueness check)
+            $existing = $droppin->view_count ?? '';
+            $viewedUserIds = $existing !== ''
+                ? array_values(array_filter(explode(',', $existing), fn ($v) => $v !== ''))
+                : [];
+            $viewedUserIds[] = (string) $validated['user_id']; // allow duplicates
+            $droppin->view_count = implode(',', $viewedUserIds);
 
             $droppin->save();
 
+            // (optional) handy summary for the client: per-user counts
+            $viewerCounts = [];
+            foreach ($viewedUserIds as $uid) {
+                $viewerCounts[$uid] = ($viewerCounts[$uid] ?? 0) + 1;
+            }
+
             return response()->json([
-                'statusCode' => true,
-                'message' => "Droppin viewed successfully",
-                'data' => [
-                    'viewed_count' => $droppin->viewed_count,
-                    'viewers' => $viewedUserIds,
+                'statusCode'    => true,
+                'message'       => "Droppin viewed successfully",
+                'data'          => [
+                    'viewed_count'  => $droppin->viewed_count,
+                    'viewers'       => $viewedUserIds,   // includes duplicates
+                    'viewer_counts' => $viewerCounts,     // aggregated counts
                 ],
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'statusCode' => false,
-                'message' => $e->getMessage(),
+                'message'    => $e->getMessage(),
             ], 500);
         }
     }
+
 
 }
