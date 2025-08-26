@@ -214,62 +214,68 @@ class UserController extends Controller
 
             // --- From pending list ---
             $pendingItems = collect(json_decode($user->following_pending_userid))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->viewedBool))
+                ->filter(fn($item) => isset($item->id, $item->date, $item->viewedBool, $item->clickedBool))
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'from' => 'pending',
-                    'viewed' => $item->viewedBool
+                    'viewed' => $item->viewedBool,
+                    'clicked' => $item->clickedBool
                 ]);
 
             // --- From following_user_id with notificationBool === false ---
             $followItems = collect(json_decode($user->following_user_id))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool, $item->clickedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'from' => 'follow',
-                    'viewed' => $item->viewedBool
+                    'viewed' => $item->viewedBool,
+                    'clicked' => $item->clickedBool
                 ]);
 
             $tagItems = collect(json_decode($user->tag_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->notificationBool, $item->viewedBool, $item->clickedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'tripId' => $item->trip_id,
                     'from' => 'tag',
-                    'viewed' => $item->viewedBool
+                    'viewed' => $item->viewedBool,
+                    'clicked' => $item->clickedBool
                 ]);
 
             $commentItems = collect(json_decode($user->comment_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->notificationBool, $item->viewedBool, $item->clickedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'trip' => $item->tripid,
                     'from' => 'comment',
-                    'viewed' => $item->viewedBool
+                    'viewed' => $item->viewedBool,
+                    'clicked' => $item->clickedBool
                 ]);
 
             $likeItems = collect(json_decode($user->like_notification))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->likeid, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->likeid, $item->notificationBool, $item->viewedBool, $item->clickedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'likeId' => $item->likeid,
                     'tripId' => $item->trip_id,
                     'from' => 'like',
-                    'viewed' => $item->viewedBool
+                    'viewed' => $item->viewedBool,
+                    'clicked' => $item->clickedBool
                 ]);
 
             $followedItems = collect(json_decode($user->followed_user_id))
-                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
+                ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool, $item->clickedBool) && $item->notificationBool === false)
                 ->map(fn($item) => [
                     'id' => intval($item->id),
                     'date' => $item->date,
                     'from' => 'followed',
-                    'viewed' => $item->viewedBool
+                    'viewed' => $item->viewedBool,
+                    'clicked' => $item->clickedBool
                 ]);
 
             // Merge all
@@ -355,6 +361,7 @@ class UserController extends Controller
                     'follow_date' => $item['date'],
                     'from' => $item['from'],
                     'viewed' => $item['viewed'],
+                    'clicked' => $item['clicked'],
                 ];
 
                 if ($item['from'] === 'comment' && isset($item['trip'])) {
@@ -1373,56 +1380,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Add a like to a droppin by a user.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\JsonResponse
-     */
-    // public function followedUsers(Request $request)
-    // {
-    //     try {
-    //         $validated = $request->validate([
-    //             'user_id' => 'required|integer|exists:users,id',
-    //         ]);
-    
-    //         $user = User::find($validated['user_id']);
-    
-    //         if (!$user) {
-    //             return response()->json([
-    //                 'statusCode' => false,
-    //                 'message' => "User not found",
-    //             ], 404);
-    //         }
-
-    //         $usersFollowing = User::whereRaw("FIND_IN_SET(?, following_user_id)", [$validated['user_id']])->get();
-
-    //         if ($usersFollowing->isEmpty()) {
-    //             return response()->json([
-    //                 'statusCode' => false,
-    //                 'message' => "No users following this user",
-    //             ], 404);
-    //         }
-    
-    //         return response()->json([
-    //             'statusCode' => true,
-    //             'message' => "Users found successfully",
-    //             'data' => $usersFollowing,
-    //         ], 200);
-    
-    //         return response()->json([
-    //             'statusCode' => true,
-    //             'message' => $flag ? "User following successfully" : "User unfollowing successfully",
-    //             'data' => $user,
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'statusCode' => false,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
     public function followedUsers(Request $request)
     {
         try {
@@ -1690,6 +1647,7 @@ class UserController extends Controller
                     'id' => $validated['following_id'],
                     'date' => now()->toDateTimeString(),
                     'viewedBool' => false,
+                    'clickedBool' => false,
                 ];
                 $user->following_pending_userid = json_encode($pending);
                 $user->save();
