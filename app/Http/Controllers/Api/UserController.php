@@ -644,6 +644,60 @@ class UserController extends Controller
         }
     }
 
+    public function viewedCommentNotification (Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'commenter_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $notifications = collect(json_decode($user->comment_notification)) ?? collect();
+
+            $matchFound = $notifications->contains(function ($item) use ($validated) {
+                return isset($item->id) && $item->id == $validated['commenter_id'];
+            });
+    
+            if (!$matchFound) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "No matching like notification found for this commenter_id",
+                ], 404);
+            };
+
+            $updatedNotifications = $notifications->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['commenter_id']) {
+                    $item->viewedBool = true;
+                }
+                return $item;
+            });
+
+            $user->comment_notification = $updatedNotifications->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Comment notification(s) marked as read",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function clickedCommentNotification (Request $request)
     {
         try {
