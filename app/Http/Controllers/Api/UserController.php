@@ -196,144 +196,6 @@ class UserController extends Controller
         }
     }
 
-    // public function getNotificationUsers(Request $request)
-    // {
-    //     try {
-    //         $validated = $request->validate([
-    //             'id' => 'required|integer|exists:users,id',
-    //         ]);
-
-    //         $user = User::find($validated['id']);
-
-    //         if (!$user) {
-    //             return response()->json([
-    //                 'statusCode' => false,
-    //                 'message' => "User not found",
-    //             ], 404);
-    //         }
-
-    //         // --- From pending list ---
-    //         $pendingItems = collect(json_decode($user->following_pending_userid))
-    //             ->filter(fn($item) => isset($item->id, $item->date, $item->viewedBool))
-    //             ->map(fn($item) => [
-    //                 'id' => intval($item->id),
-    //                 'date' => $item->date,
-    //                 'from' => 'pending',
-    //                 'viewed' => $item->viewedBool
-    //             ]);
-
-    //         // --- From following_user_id with notificationBool === false ---
-    //         $followItems = collect(json_decode($user->following_user_id))
-    //             ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
-    //             ->map(fn($item) => [
-    //                 'id' => intval($item->id),
-    //                 'date' => $item->date,
-    //                 'from' => 'follow',
-    //                 'viewed' => $item->viewedBool
-    //             ]);
-
-    //         $tagItems = collect(json_decode($user->tag_notification))
-    //             ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
-    //             ->map(fn($item) => [
-    //                 'id' => intval($item->id),
-    //                 'date' => $item->date,
-    //                 'tripId' => $item->trip_id,
-    //                 'from' => 'tag',
-    //                 'viewed' => $item->viewedBool
-    //             ]);
-
-    //         $commentItems = collect(json_decode($user->comment_notification))
-    //             ->filter(fn($item) => isset($item->id, $item->date, $item->tripid, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
-    //             ->map(fn($item) => [
-    //                 'id' => intval($item->id),
-    //                 'date' => $item->date,
-    //                 'trip' => $item->tripid,
-    //                 'from' => 'comment',
-    //                 'viewed' => $item->viewedBool
-    //             ]);
-
-    //         $likeItems = collect(json_decode($user->like_notification))
-    //             ->filter(fn($item) => isset($item->id, $item->date, $item->trip_id, $item->likeid, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
-    //             ->map(fn($item) => [
-    //                 'id' => intval($item->id),
-    //                 'date' => $item->date,
-    //                 'likeId' => $item->likeid,
-    //                 'tripId' => $item->trip_id,
-    //                 'from' => 'like',
-    //                 'viewed' => $item->viewedBool
-    //             ]);
-
-    //         $followedItems = collect(json_decode($user->followed_user_id))
-    //             ->filter(fn($item) => isset($item->id, $item->date, $item->notificationBool, $item->viewedBool) && $item->notificationBool === false)
-    //             ->map(fn($item) => [
-    //                 'id' => intval($item->id),
-    //                 'date' => $item->date,
-    //                 'from' => 'followed',
-    //                 'viewed' => $item->viewedBool
-    //             ]);
-
-    //         // Merge all
-    //         $allItems = $pendingItems->merge($followItems)->merge($tagItems)->merge($commentItems)->merge($likeItems)->merge($followedItems);
-
-    //         // Get unique user IDs
-    //         $allUserIds = $allItems->pluck('id')->unique();
-
-    //         // Get user details
-    //         $fetchedUsers = User::whereIn('id', $allUserIds)
-    //             ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
-    //             ->get();
-
-    //         // Merge extra info
-    //         $finalResult = $allItems->map(function ($item) use ($fetchedUsers) {
-    //             $user = $fetchedUsers->firstWhere('id', $item['id']);
-    //             if (!$user) return null;
-            
-    //             $base = [
-    //                 'id' => $user->id,
-    //                 'first_name' => $user->first_name,
-    //                 'last_name' => $user->last_name,
-    //                 'rolla_username' => $user->rolla_username,
-    //                 'photo' => $user->photo,
-    //                 'follow_date' => $item['date'],
-    //                 'from' => $item['from'],
-    //                 'viewed' => $item['viewed'],
-    //             ];
-            
-    //             // Add trip ID only if it's a comment notification
-    //             if ($item['from'] === 'comment' && isset($item['trip'])) {
-    //                 $base['trip'] = $item['trip'];
-    //             }
-
-    //             if ($item['from'] === 'tag' && isset($item['tripId'])) {
-    //                 $base['tripId'] = $item['tripId'];
-    //             }
-
-    //             if ($item['from'] === 'like' && isset($item['likeId'])) {
-    //                 $base['likeid'] = $item['likeId'];
-    //                 $base['tripId'] = $item['tripId'];
-    //             }
-            
-    //             return $base;
-    //         })
-    //         ->filter()
-    //         ->sortBy([['viewed', 'asc'], ['follow_date', 'desc']])
-    //         ->values();
-            
-
-    //         return response()->json([
-    //             'statusCode' => true,
-    //             'message' => "Users retrieved successfully",
-    //             'data' => $finalResult,
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'statusCode' => false,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
     public function getNotificationUsers(Request $request)
     {
         try {
@@ -635,6 +497,49 @@ class UserController extends Controller
         }
     }
 
+    public function clickedTagNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'tag_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $notifications = collect(json_decode($user->tag_notification)) ?? collect();
+
+            $updatedNotifications = $notifications->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['tag_id']) {
+                    $item->clickedBool = true;
+                }
+                return $item;
+            });
+
+            $user->tag_notification = $updatedNotifications->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "viewed tag notification",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function closeFollowedUser(Request $request)
     {
         try {
@@ -732,7 +637,7 @@ class UserController extends Controller
         }
     }
 
-    public function viewedCommentNotification (Request $request)
+    public function clickedCommentNotification (Request $request)
     {
         try {
             $validated = $request->validate([
@@ -764,7 +669,7 @@ class UserController extends Controller
 
             $updatedNotifications = $notifications->map(function ($item) use ($validated) {
                 if (isset($item->id) && $item->id == $validated['commenter_id']) {
-                    $item->viewedBool = true;
+                    $item->clickedBool = true;
                 }
                 return $item;
             });
@@ -894,6 +799,60 @@ class UserController extends Controller
         }
     }
 
+    public function clickedLikeNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id', 
+                'like_id' => 'required|integer|exists:users,id', 
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $notifications = collect(json_decode($user->like_notification)) ?? collect();
+            
+            $matchFound = $notifications->contains(function ($item) use ($validated) {
+                return isset($item->id) && $item->id == $validated['like_id'];
+            });
+    
+            if (!$matchFound) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "No matching like notification found for this like_id",
+                ], 404);
+            };
+
+            $updatedNotifications = $notifications->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['like_id']) {
+                    $item->clickedBool = true;
+                }
+                return $item;
+            });
+
+            $user->like_notification = $updatedNotifications->values()->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Like notification(s) marked as read",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function markLikeNotificationAsRead(Request $request)
     {
         try {
@@ -970,6 +929,49 @@ class UserController extends Controller
             $updatedList = $followList->map(function ($item) use ($validated) {
                 if (isset($item->id) && $item->id == $validated['following_id']) {
                     $item->viewedBool = true;
+                }
+                return $item;
+            });
+
+            $user->following_user_id = $updatedList->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Notification marked as sent",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function clickedFollowingNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'following_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $followList = collect(json_decode($user->following_user_id)) ?? collect();
+
+            $updatedList = $followList->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['following_id']) {
+                    $item->clickedBool = true;
                 }
                 return $item;
             });
@@ -1077,6 +1079,49 @@ class UserController extends Controller
         }
     }
 
+    public function clickedFollowPendingNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'followpending_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $followList = collect(json_decode($user->following_pending_userid)) ?? collect();
+
+            $updatedList = $followList->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['followpending_id']) {
+                    $item->clickedBool = true;
+                }
+                return $item;
+            });
+
+            $user->following_pending_userid = $updatedList->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Notification marked as sent",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function viewedFollowedNotification(Request $request)
     {
         try {
@@ -1099,6 +1144,49 @@ class UserController extends Controller
             $updatedList = $followList->map(function ($item) use ($validated) {
                 if (isset($item->id) && $item->id == $validated['followed_id']) {
                     $item->viewedBool = true;
+                }
+                return $item;
+            });
+
+            $user->followed_user_id = $updatedList->toJson();
+            $user->save();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => "Notification marked as sent",
+                'data' => $user,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function clickedFollowedNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'followed_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $user = User::find($validated['user_id']);
+
+            if (!$user) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => "User not found",
+                ], 404);
+            }
+
+            $followList = collect(json_decode($user->followed_user_id)) ?? collect();
+
+            $updatedList = $followList->map(function ($item) use ($validated) {
+                if (isset($item->id) && $item->id == $validated['followed_id']) {
+                    $item->clickedBool = true;
                 }
                 return $item;
             });
@@ -1666,6 +1754,7 @@ class UserController extends Controller
                     'date' => Carbon::now()->toIso8601String(),
                     'notificationBool' => false,
                     'viewedBool' => false,
+                    'clickedBool' => false,
                 ];
                 $user->following_user_id = json_encode($followingList);
             }
@@ -1682,6 +1771,7 @@ class UserController extends Controller
                     'date' => Carbon::now()->toIso8601String(),
                     'notificationBool' => false,
                     'viewedBool' => false,
+                    'clickedBool' => false,
                 ];
                 $followedUser->followed_user_id = json_encode($followedList);
             }
@@ -1751,92 +1841,6 @@ class UserController extends Controller
         }
     }
 
-    // public function droppinLike(Request $request)
-    // {
-    //     try {
-    //         $validated = $request->validate([
-    //             'user_id' => 'required|integer|exists:users,id',
-    //             'droppin_id' => 'required|integer|exists:droppins,id',
-    //             'flag' => 'required|boolean',
-    //         ]);
-
-    //         $droppin = Droppin::find($validated['droppin_id']);
-
-    //         if (!$droppin) {
-    //             return response()->json([
-    //                 'statusCode' => false,
-    //                 'message' => "Droppin not found",
-    //             ], 404);
-    //         }
-
-    //         // 💡 Handle like/unlike logic
-    //         $likes = $droppin->likes_user_id ? explode(',', $droppin->likes_user_id) : [];
-
-    //         if ($validated['flag']) {
-    //             if (!in_array($validated['user_id'], $likes)) {
-    //                 $likes[] = $validated['user_id'];
-    //             }
-    //         } else {
-    //             if (in_array($validated['user_id'], $likes)) {
-    //                 $likes = array_diff($likes, [$validated['user_id']]);
-    //             }
-    //         }
-
-    //         $droppin->likes_user_id = implode(',', $likes);
-    //         $droppin->save();
-
-    //         // 💡 Get target user (owner of the trip related to the droppin)
-    //         $tripId = DB::table('droppins')
-    //             ->where('id', $validated['droppin_id'])
-    //             ->value('trip_id');
-
-    //         $tripOwnerId = DB::table('trips')
-    //             ->where('id', $tripId)
-    //             ->value('user_id');
-
-    //         if ($tripOwnerId) {
-    //             $tripOwner = User::find($tripOwnerId);
-
-    //             if ($tripOwner) {
-    //                 $notifications = collect(json_decode($tripOwner->like_notification)) ?? collect();
-
-    //                 if ($validated['flag']) {
-    //                     // Add new notification
-    //                     $notifications->push([
-    //                         'id' => $validated['user_id'],
-    //                         'date' => now()->toDateTimeString(),
-    //                         'likeid' => $droppin->id,
-    //                         'trip_id' => $tripId,
-    //                         'notificationBool' => false,
-    //                         'viewedBool' => false,
-    //                     ]);
-    //                 } else {
-    //                     // Remove notification from that user and droppin
-    //                     $notifications = $notifications->reject(function ($item) use ($validated, $droppin) {
-    //                         return isset($item->id, $item->likeid) &&
-    //                             $item->id == $validated['user_id'] &&
-    //                             $item->likeid == $droppin->id;
-    //                     });
-    //                 }
-
-    //                 $tripOwner->like_notification = $notifications->values()->toJson();
-    //                 $tripOwner->save();
-    //             }
-    //         }
-
-    //         return response()->json([
-    //             'statusCode' => true,
-    //             'message' => $validated['flag'] ? "Droppin liked successfully" : "Droppin unliked successfully",
-    //             'data' => $droppin,
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'statusCode' => false,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
     public function droppinLike(Request $request)
     {
         try {
@@ -1901,6 +1905,7 @@ class UserController extends Controller
                         'trip_id'          => (int) $tripId,
                         'notificationBool' => false,
                         'viewedBool'       => false,
+                        'clickedBool'       => false,
                     ];
                     $notified = true;
                 } else {

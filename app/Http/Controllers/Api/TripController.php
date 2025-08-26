@@ -142,6 +142,7 @@ class TripController extends Controller
                             'date' => $now,
                             'notificationBool' => false,
                             'viewedBool' => false,
+                            'clickedBool' => false,
                         ];
             
                         $taggedUser->tag_notification = $notifications;
@@ -649,6 +650,7 @@ class TripController extends Controller
                             'notificationBool' => false,
                             'trip_id' => $trip->id,
                             'viewedBool' => false,
+                            'clickedBool' => false,
                         ];
                         $user->tag_notification = $notifications;
                         $user->save();

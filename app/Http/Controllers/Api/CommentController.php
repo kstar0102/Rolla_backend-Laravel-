@@ -78,6 +78,7 @@ class CommentController extends Controller
                     'tripid' => (int)$request->trip_id,
                     'notificationBool' => false,
                     'viewedBool' => false,
+                    'clickedBool' => false,
                 ];
     
                 DB::table('users')

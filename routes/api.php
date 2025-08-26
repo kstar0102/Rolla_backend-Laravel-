@@ -61,6 +61,13 @@ Route::group(['prefix' => 'user'], static function () {
     Route::post('viewedfollowPendingnotification', [UserController::class, 'viewedFollowPendingNotification']);
     Route::post('viewedfollowednotification', [UserController::class, 'viewedFollowedNotification']);
 
+    Route::post('clickedFollowingNotification', [UserController::class, 'clickedFollowingNotification']);
+    Route::post('clickedCommentNotification', [UserController::class, 'clickedCommentNotification']);
+    Route::post('clickedLikeNotification', [UserController::class, 'clickedLikeNotification']);
+    Route::post('clickedTagNotification', [UserController::class, 'clickedTagNotification']);
+    Route::post('clickedFollowedNotification', [UserController::class, 'clickedFollowedNotification']);
+    Route::post('clickedFollowPendingNotification', [UserController::class, 'clickedFollowPendingNotification']);
+
     Route::post('likedviewed', [UserController::class, 'markLikeNotificationAsRead']);
 });
 
