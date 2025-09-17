@@ -86,6 +86,7 @@ Route::group(['prefix' => 'trip'], static function () {
 Route::group(['prefix' => 'droppin'], static function () {
     Route::get('data', [TripController::class, 'getDroppins']);
     Route::post('viewed', [TripController::class, 'droppinViewed']);
+    Route::post('withnumberviewed', [TripController::class, 'droppinViewedwithnumber']);
 });
 
 Route::group(['prefix' => 'comment'], static function () {

@@ -150,11 +150,6 @@ class UserController extends Controller
             $user = User::find($validated['user_id']);
 
             if ($user) {
-                // $followingIds = collect(explode(',', $user->following_user_id))
-                //     ->filter()
-                //     ->map(fn($id) => intval(trim($id)))
-                //     ->unique()
-                //     ->values();
                 $followingData = json_decode($user->following_user_id, true);
 
                 if (!is_array($followingData)) {
