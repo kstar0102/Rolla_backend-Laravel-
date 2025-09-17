@@ -774,43 +774,53 @@ class TripController extends Controller
             $validated = $request->validate([
                 'droppin_id'  => 'required|exists:droppins,id',
                 'user_id'     => 'required|exists:users,id',
-                'increment'   => 'required|integer|min:1',
+                'increment'   => 'required|integer|min:1',  // Ensure an increment value is provided
             ]);
-
+    
             $droppin = Droppin::find($validated['droppin_id']);
-
+    
             if (!$droppin) {
                 return response()->json([
                     'statusCode' => false,
                     'message'    => "Droppin not found",
                 ], 404);
             }
-
+    
+            // Use the increment value to repeat the user_id
             $increment = $validated['increment'];
-            $droppin->viewed_count = ($droppin->viewed_count ?? 0) + $increment;
-
-            // Append the viewer EVERY time (no uniqueness check)
+            $userId = (string) $validated['user_id'];
+            
+            // Get existing view_count (if any)
             $existing = $droppin->view_count ?? '';
             $viewedUserIds = $existing !== ''
                 ? array_values(array_filter(explode(',', $existing), fn ($v) => $v !== ''))
                 : [];
-            $viewedUserIds[] = (string) $validated['user_id']; // allow duplicates
+    
+            // Append the user_id multiple times based on increment
+            for ($i = 0; $i < $increment; $i++) {
+                $viewedUserIds[] = $userId;
+            }
+    
+            // Update the view_count with the new array
             $droppin->view_count = implode(',', $viewedUserIds);
-
+    
+            // Increment the viewed_count by the specified increment
+            $droppin->viewed_count = ($droppin->viewed_count ?? 0) + $increment;
+    
             $droppin->save();
-
+    
             // (optional) handy summary for the client: per-user counts
             $viewerCounts = [];
             foreach ($viewedUserIds as $uid) {
                 $viewerCounts[$uid] = ($viewerCounts[$uid] ?? 0) + 1;
             }
-
+    
             return response()->json([
                 'statusCode'    => true,
                 'message'       => "Droppin viewed successfully",
                 'data'          => [
                     'viewed_count'  => $droppin->viewed_count,
-                    'viewers'       => $viewedUserIds,   // includes duplicates
+                    'viewers'       => $viewedUserIds,   // includes the repeated user_ids
                     'viewer_counts' => $viewerCounts,     // aggregated counts
                 ],
             ], 200);
@@ -821,7 +831,5 @@ class TripController extends Controller
             ], 500);
         }
     }
-
-
 
 }
