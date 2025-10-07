@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable; 
 
 class User extends Authenticatable
 {
-    use HasFactory, HasApiTokens;
+    use HasFactory, HasApiTokens, Notifiable;
     protected $appends = ['garage'];
-    protected $hidden = ['garage_raw']; 
+    protected $hidden = ['garage_raw', 'reset_code_hash', 'reset_token']; 
 
     protected $fillable = [
         'first_name',
@@ -32,7 +33,19 @@ class User extends Authenticatable
         'followed_user_id',
         'tag_notification',
         'comment_notification',
-        'like_notification'
+        'like_notification',
+        'reset_code_hash',
+        'reset_code_expires_at',
+        'reset_code_attempts',
+        'reset_code_last_sent_at',
+        'reset_token',
+        'reset_token_expires_at'
+    ];
+
+    protected $casts = [
+        'reset_code_expires_at'   => 'datetime',
+        'reset_code_last_sent_at' => 'datetime',
+        'reset_token_expires_at'  => 'datetime',
     ];
 
     public function trips()

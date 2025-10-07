@@ -20,11 +20,21 @@ use App\Http\Controllers\Api\ImageUploadController;
 |
 */
 
+Route::get('/_mailtest', function () {
+    Mail::raw('Test email from Laravel', function ($m) {
+        $m->to('techableteam@gmail.com')->subject('Test');
+    });
+    return 'sent';
+});
+
 // Auth routes
 Route::group(['prefix' => 'auth'], static function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
+    Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);   
+    Route::post('/password/verify', [AuthController::class, 'verifyResetCode']);  
+    Route::post('/password/reset',  [AuthController::class, 'resetPassword']); 
 });
 
 // User routes

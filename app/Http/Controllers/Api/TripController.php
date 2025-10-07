@@ -820,8 +820,8 @@ class TripController extends Controller
                 'message'       => "Droppin viewed successfully",
                 'data'          => [
                     'viewed_count'  => $droppin->viewed_count,
-                    'viewers'       => $viewedUserIds,   // includes the repeated user_ids
-                    'viewer_counts' => $viewerCounts,     // aggregated counts
+                    'viewers'       => $viewedUserIds,  
+                    'viewer_counts' => $viewerCounts,  
                 ],
             ], 200);
         } catch (\Exception $e) {

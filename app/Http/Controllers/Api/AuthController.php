@@ -6,7 +6,9 @@ use App\Models\User;
 use App\Models\Trip;
 use App\Models\Droppin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
+use App\Notifications\PasswordResetCode;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -26,6 +28,134 @@ class AuthController extends Controller
     protected $auth;
     public function __construct()
     {
+    }
+
+     // 2) user enters email -> create 6-digit code and send (generic response)
+     public function forgotPassword(Request $request)
+     {
+         $request->validate(['email' => 'required|email']);
+ 
+         // Don't reveal if user exists
+         $user = User::where('email', $request->email)->first();
+ 
+         if ($user) {
+             // throttle: at most once per minute
+             if ($user->reset_code_last_sent_at && $user->reset_code_last_sent_at->gt(now()->subMinute())) {
+                 // silently ignore to keep generic response
+             } else {
+                 $code = (string) random_int(100000, 999999);
+                 $user->reset_code_hash        = Hash::make($code);
+                 $user->reset_code_expires_at  = now()->addMinutes(10);
+                 $user->reset_code_attempts    = 0;
+                 $user->reset_code_last_sent_at= now();
+                 // clear any previous token
+                 $user->reset_token            = null;
+                 $user->reset_token_expires_at = null;
+                 $user->save();
+ 
+                 // send email/SMS
+                 try {
+                     $user->notify(new PasswordResetCode($code));
+                 } catch (\Throwable $e) {
+                     // log but keep generic response
+                     \Log::warning('Password code send failed: '.$e->getMessage());
+                 }
+             }
+         }
+
+         if (app()->environment('local') && isset($code)) {
+            return response()->json([
+                'statusCode' => true,
+                'message'    => 'If the email exists, a verification code has been sent.',
+                'dev_code'   => $code,   // REMOVE in staging/prod
+            ]);
+        }
+ 
+         // Generic response to avoid email enumeration
+         return response()->json([
+             'statusCode' => true,
+             'message'    => 'If the email exists, a verification code has been sent.',
+         ]);
+     }
+ 
+     // 3/4) verify the 6-digit code; returns 200 + short-lived reset_token if OK
+     public function verifyResetCode(Request $request)
+     {
+         $validated = $request->validate([
+             'email' => 'required|email',
+             'code'  => 'required|digits:6',
+         ]);
+ 
+         $user = User::where('email', $validated['email'])->first();
+         if (!$user || !$user->reset_code_hash || !$user->reset_code_expires_at) {
+             // keep it generic
+             return response()->json(['statusCode' => false, 'message' => 'Invalid code or expired.'], 422);
+         }
+ 
+         // max 5 attempts
+         if ($user->reset_code_attempts >= 5) {
+             return response()->json(['statusCode' => false, 'message' => 'Too many attempts. Request a new code.'], 429);
+         }
+ 
+         if ($user->reset_code_expires_at->isPast()) {
+             return response()->json(['statusCode' => false, 'message' => 'Code expired. Request a new code.'], 422);
+         }
+ 
+         $user->reset_code_attempts += 1;
+ 
+         if (! Hash::check($validated['code'], $user->reset_code_hash)) {
+             $user->save();
+             return response()->json(['statusCode' => false, 'message' => 'Invalid code.'], 422);
+         }
+ 
+         // success -> mint a reset token for the final step
+         $user->reset_token = Str::random(64);
+         $user->reset_token_expires_at = now()->addMinutes(30);
+         $user->reset_code_attempts = 0;
+         $user->save();
+ 
+         return response()->json([
+             'statusCode' => true,
+             'message'    => 'Code verified.',
+             'reset_token'=> $user->reset_token,   // frontend must keep and send with new password
+         ]);
+     }
+ 
+     // 5) save new password
+     public function resetPassword(Request $request)
+     {
+         $validated = $request->validate([
+             'email'        => 'required|email',
+             'reset_token'  => 'required|string',
+             'password'     => 'required|min:6|confirmed', // expects password & password_confirmation
+         ]);
+ 
+         $user = User::where('email', $validated['email'])->first();
+         if (!$user || !$user->reset_token || !$user->reset_token_expires_at) {
+             return response()->json(['statusCode' => false, 'message' => 'Invalid or expired reset token.'], 422);
+         }
+ 
+         if (! hash_equals($user->reset_token, $validated['reset_token']) ||
+             $user->reset_token_expires_at->isPast()) {
+             return response()->json(['statusCode' => false, 'message' => 'Invalid or expired reset token.'], 422);
+         }
+ 
+         $user->password = Hash::make($validated['password']);
+ 
+         // cleanup all reset fields
+         $user->reset_code_hash = null;
+         $user->reset_code_expires_at = null;
+         $user->reset_code_attempts = 0;
+         $user->reset_code_last_sent_at = null;
+         $user->reset_token = null;
+         $user->reset_token_expires_at = null;
+ 
+         $user->save();
+ 
+         return response()->json([
+             'statusCode' => true,
+             'message'    => 'Password updated successfully.',
+         ]);
     }
 
     public function register(Request $request)
