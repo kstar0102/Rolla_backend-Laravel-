@@ -66,7 +66,7 @@ class AuthController extends Controller
                 return response()->json([
                     'statusCode' => false,
                     'message' => 'No account found with that email address.'
-                ], 404);
+                ], 202);
             }
             // Otherwise, keep generic
             return response()->json([
