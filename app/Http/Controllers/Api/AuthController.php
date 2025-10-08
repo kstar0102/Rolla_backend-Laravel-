@@ -59,8 +59,7 @@ class AuthController extends Controller
                 $fromAddress = config('mail.from.address');
                 $fromName    = config('mail.from.name');
                 Mail::raw(
-                    'Use this verification code to reset your password: **' . $code . '**. 
-                    This code will expire in 10 minutes.', function ($message) use ($user, $fromAddress, $fromName) {
+                    'Use this verification code to reset your password: **' . $code . '**. This code will expire in 10 minutes.', function ($message) use ($user, $fromAddress, $fromName) {
                     $message->from($fromAddress, $fromName);
                     $message->to($user->email)->subject('Your Rolla Password Reset Code');
                 });
