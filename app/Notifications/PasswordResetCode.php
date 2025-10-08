@@ -20,12 +20,14 @@ class PasswordResetCode extends Notification implements ShouldQueue
         return ['mail']; // add 'nexmo', 'twilio', etc. if you send SMS
     }
 
-    public function toMail($notifiable): MailMessage
+    public function toMail($notifiable)
     {
         return (new MailMessage)
+            ->from(config('mail.from.address'), config('mail.from.name')) // From address from config
             ->subject('Your Rolla password reset code')
-            ->line('Use this code to reset your password:')
-            ->line("**{$this->code}**")
-            ->line('This code expires in 10 minutes. If you did not request it, you can ignore this email.');
+            ->greeting('Hi ' . $notifiable->name) // Can use $notifiable->name or $notifiable->email
+            ->line('Use this verification code to reset your password:')
+            ->line('**' . $this->code . '**') // Display the reset code
+            ->line('This code will expire in 10 minutes.');
     }
 }

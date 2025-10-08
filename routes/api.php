@@ -20,11 +20,33 @@ use App\Http\Controllers\Api\ImageUploadController;
 |
 */
 
-Route::get('/_mailtest', function () {
-    Mail::raw('Test email from Laravel', function ($m) {
-        $m->to('techableteam@gmail.com')->subject('Test');
-    });
-    return 'sent';
+Route::get('/_mailtest', function (Request $req) {
+    // read from CONFIG (safe with config:cache)
+    $fromAddress = config('mail.from.address');
+    $fromName    = config('mail.from.name');
+
+    // recipient from query ?to=...
+    $to = $req->query('to', 'seniordev52@gmail.com');
+
+    // basic validation to avoid null/invalid addresses
+    if (!is_string($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        return response("Invalid 'to' email: ".print_r($to, true), 422);
+    }
+    if (!is_string($fromAddress) || !filter_var($fromAddress, FILTER_VALIDATE_EMAIL)) {
+        return response("Invalid 'from' email in config: ".print_r($fromAddress, true), 500);
+    }
+
+    try {
+        Mail::raw('Test email from Laravel', function ($m) use ($to, $fromAddress, $fromName) {
+            $m->from($fromAddress, $fromName);     // ✅ use config, not env()
+            $m->to($to)->subject('Test');
+        });
+        return "sent to {$to} from {$fromAddress}";
+    } catch (TransportExceptionInterface $e) {
+        return response('MAIL ERROR: ' . $e->getMessage(), 500);
+    } catch (\Throwable $e) {
+        return response('GENERAL ERROR: ' . $e->getMessage(), 500);
+    }
 });
 
 // Auth routes
