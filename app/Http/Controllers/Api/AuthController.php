@@ -30,55 +30,65 @@ class AuthController extends Controller
     {
     }
 
-     // 2) user enters email -> create 6-digit code and send (generic response)
-     public function forgotPassword(Request $request)
-     {
-         $request->validate(['email' => 'required|email']);
- 
-         // Don't reveal if user exists
-         $user = User::where('email', $request->email)->first();
- 
-         if ($user) {
-             // throttle: at most once per minute
-             if ($user->reset_code_last_sent_at && $user->reset_code_last_sent_at->gt(now()->subMinute())) {
-                 // silently ignore to keep generic response
-             } else {
-                 $code = (string) random_int(100000, 999999);
-                 $user->reset_code_hash        = Hash::make($code);
-                 $user->reset_code_expires_at  = now()->addMinutes(10);
-                 $user->reset_code_attempts    = 0;
-                 $user->reset_code_last_sent_at= now();
-                 // clear any previous token
-                 $user->reset_token            = null;
-                 $user->reset_token_expires_at = null;
-                 $user->save();
- 
-                 // send email/SMS
-                 try {
-                     $user->notify(new PasswordResetCode($code));
-                 } catch (\Throwable $e) {
-                     // log but keep generic response
-                     \Log::warning('Password code send failed: '.$e->getMessage());
-                 }
-             }
-         }
+    public function forgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
 
-         if (app()->environment('local') && isset($code)) {
+        // Don't reveal if user exists
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            // throttle: at most once per minute
+            if ($user->reset_code_last_sent_at && $user->reset_code_last_sent_at->gt(now()->subMinute())) {
+                // silently ignore to keep generic response
+            } else {
+                $code = (string) random_int(100000, 999999);
+                $user->reset_code_hash        = Hash::make($code);
+                $user->reset_code_expires_at  = now()->addMinutes(10);
+                $user->reset_code_attempts    = 0;
+                $user->reset_code_last_sent_at= now();
+                // clear any previous token
+                $user->reset_token            = null;
+                $user->reset_token_expires_at = null;
+                $user->save();
+
+                // send email/SMS
+                try {
+                    $user->notify(new PasswordResetCode($code));
+                } catch (\Throwable $e) {
+                    \Log::warning('Password code send failed: '.$e->getMessage());
+                }
+            }
+        }
+
+        if (! $user) {
+            if (app()->environment('local')) {
+                return response()->json([
+                    'statusCode' => false,
+                    'message' => 'No account found with that email address.'
+                ], 404);
+            }
+            // Otherwise, keep generic
+            return response()->json([
+                'statusCode' => true,
+                'message' => 'If the email exists, a verification code has been sent.'
+            ]);
+        }
+
+        if (app()->environment('local') && isset($code)) {
             return response()->json([
                 'statusCode' => true,
                 'message'    => 'If the email exists, a verification code has been sent.',
-                'dev_code'   => $code,   // REMOVE in staging/prod
+                'dev_code'   => $code,  
             ]);
         }
+
+        return response()->json([
+            'statusCode' => true,
+            'message'    => 'If the email exists, a verification code has been sent.',
+        ]);
+    }
  
-         // Generic response to avoid email enumeration
-         return response()->json([
-             'statusCode' => true,
-             'message'    => 'If the email exists, a verification code has been sent.',
-         ]);
-     }
- 
-     // 3/4) verify the 6-digit code; returns 200 + short-lived reset_token if OK
      public function verifyResetCode(Request $request)
      {
          $validated = $request->validate([
