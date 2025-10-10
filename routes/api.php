@@ -9,23 +9,10 @@ use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\CarTypeController;
 use App\Http\Controllers\Api\ImageUploadController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
-
 Route::get('/_mailtest', function (Request $req) {
-    // read from CONFIG (safe with config:cache)
     $fromAddress = config('mail.from.address');
     $fromName    = config('mail.from.name');
 
-    // recipient from query ?to=...
     $to = $req->query('to', 'seniordev52@gmail.com');
 
     // basic validation to avoid null/invalid addresses
@@ -38,7 +25,7 @@ Route::get('/_mailtest', function (Request $req) {
 
     try {
         Mail::raw('Test email from Laravel', function ($m) use ($to, $fromAddress, $fromName) {
-            $m->from($fromAddress, $fromName);     // ✅ use config, not env()
+            $m->from($fromAddress, $fromName);
             $m->to($to)->subject('Test');
         });
         return "sent to {$to} from {$fromAddress}";
