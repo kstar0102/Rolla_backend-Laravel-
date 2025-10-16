@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\CarTypeController;
 use App\Http\Controllers\Api\ImageUploadController;
+use App\Http\Controllers\Api\TestController;
 
 Route::get('/_mailtest', function (Request $req) {
     $fromAddress = config('mail.from.address');
@@ -34,6 +35,13 @@ Route::get('/_mailtest', function (Request $req) {
     } catch (\Throwable $e) {
         return response('GENERAL ERROR: ' . $e->getMessage(), 500);
     }
+});
+
+
+// Route::apiResource('tests', TestController::class);
+
+Route::group(['prefix' => 'tests'], static function () {
+    Route::post('store', [TestController::class, 'store']);
 });
 
 // Auth routes
