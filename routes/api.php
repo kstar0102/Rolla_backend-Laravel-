@@ -42,6 +42,7 @@ Route::get('/_mailtest', function (Request $req) {
 
 Route::group(['prefix' => 'tests'], static function () {
     Route::post('store', [TestController::class, 'store']);
+    Route::get('{id}', [TestController::class, 'show']);
 });
 
 // Auth routes
