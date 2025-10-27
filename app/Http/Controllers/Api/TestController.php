@@ -59,4 +59,16 @@ class TestController extends Controller
         $test->delete();
         return response()->json(['message' => 'Deleted successfully']);
     }
+
+   // TestController.php
+    public function latestRecord()
+    {
+        $test = Test::latest()->first();   // or ->latest()->first()
+
+        if (!$test) {
+            return response()->json(['message' => 'No records found'], 504);
+        }
+        return response()->json($test);
+    }
+
 }

@@ -84,6 +84,7 @@ class TripController extends Controller
             'droppins.*.stop_index' => 'nullable|integer',
             'droppins.*.image_path' => 'required|string',
             'droppins.*.image_caption' => 'nullable|string',
+            'droppins.*.format' => 'nullable|string',
             'start_location' => 'nullable|string',
             'destination_location' => 'nullable|string',
             'map_style' => 'nullable|string',
@@ -159,6 +160,7 @@ class TripController extends Controller
                         'image_path' => $droppinData['image_path'],
                         'image_caption' => $droppinData['image_caption'] ?? "",
                         'deley_time' => $droppinData['delay_time'] ?? null,
+                        'format' => $droppinData['format'] ?? null,
                     ]);
                     $trip->droppins()->save($droppin);
                 }
@@ -521,6 +523,7 @@ class TripController extends Controller
             'droppins.*.stop_index' => 'nullable|integer',
             'droppins.*.image_path' => 'required|string',
             'droppins.*.image_caption' => 'nullable|string',
+            'droppins.*.format' => 'nullable|string',
             'start_location' => 'nullable|string',
             'destination_location' => 'nullable|string',
             'map_style' => 'nullable|string',
@@ -572,6 +575,7 @@ class TripController extends Controller
                         'stop_index' => $droppinData['stop_index'],
                         'image_path' => $droppinData['image_path'],
                         'image_caption' => $droppinData['image_caption'] ?? '',
+                        'format' => $droppinData['format'],
                     ];
             
                     if (!empty($droppinData['delay_time'])) {
