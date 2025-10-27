@@ -718,6 +718,26 @@ class TripController extends Controller
             ], 500);
         }
     }    
+
+    public function setAllPortrait()
+    {
+        try {
+            // update() returns the affected rows count ✅
+            $updatedCount = Droppin::query()->update(['format' => 'portrait']);
+
+            return response()->json([
+                'message' => 'Droppins format updated to portrait ✅',
+                'updated_count' => $updatedCount
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update droppins format ❌',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     
     public function droppinViewed(Request $request)
     {

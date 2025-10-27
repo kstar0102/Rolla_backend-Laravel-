@@ -109,6 +109,8 @@ Route::group(['prefix' => 'trip'], static function () {
     Route::get('/trips/user', [TripController::class, 'getTripsByUserId']);
     Route::post('update', [TripController::class, 'updateTrip']);
     Route::post('delete', [TripController::class, 'removeTrip']);
+    Route::post('/droppins/format/portrait', [TripController::class, 'setAllPortrait']);
+
 });
 
 // Droppin routes
