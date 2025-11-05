@@ -1393,22 +1393,51 @@ class UserController extends Controller
                 ], 404);
             }
 
-            $tripData = Trip::whereIn('user_id', $usersIncludingRequest->pluck('id'))->with([
-                'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
-                'droppins',
-                'comments.user:id,photo,rolla_username,first_name,last_name',
-            ])->get();
+            $tripData = Trip::whereIn('user_id', $usersIncludingRequest->pluck('id'))
+                ->with([
+                    'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
+                    'droppins',
+                    'comments.user:id,photo,rolla_username,first_name,last_name',
+                ])
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-            $tripData->each(function ($trip) {
-                $trip->droppins->transform(function ($droppin) {
+            // Collect all user IDs at once to avoid N+1 queries
+            $allLikedUserIds = collect();
+            
+            foreach ($tripData as $trip) {
+                foreach ($trip->droppins as $droppin) {
+                    if (!empty($droppin->likes_user_id)) {
+                        $userIds = collect(explode(',', $droppin->likes_user_id))
+                            ->filter()
+                            ->map(fn($id) => intval(trim($id)));
+                        $allLikedUserIds = $allLikedUserIds->merge($userIds);
+                    }
+                }
+            }
+            
+            // Fetch all liked users at once (single query instead of hundreds)
+            $allLikedUserIds = $allLikedUserIds->unique();
+            $likedUsersCache = [];
+            
+            if ($allLikedUserIds->isNotEmpty()) {
+                $likedUsersCache = User::whereIn('id', $allLikedUserIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get()
+                    ->keyBy('id');
+            }
+
+            $tripData->each(function ($trip) use ($likedUsersCache) {
+                $trip->droppins->transform(function ($droppin) use ($likedUsersCache) {
                     $userIds = collect(explode(',', $droppin->likes_user_id))
                         ->filter()
                         ->map(fn($id) => intval(trim($id)))
                         ->unique();
     
-                    $likedUsers = User::whereIn('id', $userIds)
-                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                        ->get();
+                    // Use cached users instead of querying
+                    $likedUsers = $userIds->map(fn($id) => $likedUsersCache->get($id))
+                        ->filter()
+                        ->values();
     
                     $droppin->liked_users = $likedUsers;
     
@@ -1528,24 +1557,53 @@ class UserController extends Controller
              // Step 3: Add the current user's ID
              $allUserIds = array_unique(array_merge([$user->id], $followingIds));
      
-             // Step 4: Get trips
-             $tripData = Trip::whereIn('user_id', $allUserIds)->with([
-                 'user:id,photo,rolla_username,first_name,last_name,following_user_id,followed_user_id,block_users,following_pending_userid,tag_notification,comment_notification,like_notification',
-                 'droppins',
-                 'comments.user:id,photo,rolla_username,first_name,last_name',
-             ])->get();
+             // Step 4: Get trips with ordering (most recent first)
+             $tripData = Trip::whereIn('user_id', $allUserIds)
+                 ->with([
+                     'user:id,photo,rolla_username,first_name,last_name,following_user_id,followed_user_id,block_users,following_pending_userid,tag_notification,comment_notification,like_notification',
+                     'droppins',
+                     'comments.user:id,photo,rolla_username,first_name,last_name',
+                 ])
+                 ->orderBy('created_at', 'desc')
+                 ->get();
      
-             // Step 5: Attach liked users to droppins
-             $tripData->each(function ($trip) {
-                 $trip->droppins->transform(function ($droppin) {
+             // Step 5: Collect all user IDs at once to avoid N+1 queries
+             $allLikedUserIds = collect();
+             
+             foreach ($tripData as $trip) {
+                 foreach ($trip->droppins as $droppin) {
+                     if (!empty($droppin->likes_user_id)) {
+                         $userIds = collect(explode(',', $droppin->likes_user_id))
+                             ->filter()
+                             ->map(fn($id) => intval(trim($id)));
+                         $allLikedUserIds = $allLikedUserIds->merge($userIds);
+                     }
+                 }
+             }
+             
+             // Fetch all liked users at once (single query instead of hundreds)
+             $allLikedUserIds = $allLikedUserIds->unique();
+             $likedUsersCache = [];
+             
+             if ($allLikedUserIds->isNotEmpty()) {
+                 $likedUsersCache = User::whereIn('id', $allLikedUserIds)
+                     ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                     ->get()
+                     ->keyBy('id');
+             }
+     
+             // Step 6: Attach liked users to droppins using cache
+             $tripData->each(function ($trip) use ($likedUsersCache) {
+                 $trip->droppins->transform(function ($droppin) use ($likedUsersCache) {
                      $userIds = collect(explode(',', $droppin->likes_user_id))
                          ->filter()
                          ->map(fn($id) => intval(trim($id)))
                          ->unique();
      
-                     $likedUsers = User::whereIn('id', $userIds)
-                         ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                         ->get();
+                     // Use cached users instead of querying
+                     $likedUsers = $userIds->map(fn($id) => $likedUsersCache->get($id))
+                         ->filter()
+                         ->values();
      
                      $droppin->liked_users = $likedUsers;
      

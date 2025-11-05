@@ -194,12 +194,15 @@ class TripController extends Controller
         try {
             $username = $request->input('username');
             $destination = $request->input('destination');
+            $page = $request->input('page', 1);
+            $perPage = $request->input('per_page', 10); // Load 10 trips at a time
 
             $tripsQuery = Trip::with([
                 'user:id,photo,rolla_username,first_name,last_name,following_user_id,block_users',
                 'droppins',
                 'comments.user:id,photo,rolla_username,first_name,last_name',
-            ]);
+            ])
+            ->orderBy('created_at', 'desc'); // Most recent first
 
             if (!empty($username)) {
                 $tripsQuery->whereHas('user', function ($query) use ($username) {
@@ -214,10 +217,55 @@ class TripController extends Controller
                 $tripsQuery->where('destination_address', 'LIKE', "%{$destination}%");
             }
     
-            // Get the filtered trips
-            $trips = $tripsQuery->get();
+            // Use pagination instead of loading everything
+            $paginatedTrips = $tripsQuery->paginate($perPage);
+            $trips = $paginatedTrips->items();
     
-            $trips->transform(function ($trip) {
+            // Collect all user IDs at once to avoid N+1 queries
+            $allLikedUserIds = collect();
+            $allMutedUserIds = collect();
+            
+            foreach ($trips as $trip) {
+                foreach ($trip->droppins as $droppin) {
+                    if (!empty($droppin->likes_user_id)) {
+                        $userIds = collect(explode(',', $droppin->likes_user_id))
+                            ->filter()
+                            ->map(fn($id) => intval(trim($id)));
+                        $allLikedUserIds = $allLikedUserIds->merge($userIds);
+                    }
+                }
+                
+                if (!empty($trip->muted_ids)) {
+                    $mutedIds = collect(explode(',', $trip->muted_ids))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)));
+                    $allMutedUserIds = $allMutedUserIds->merge($mutedIds);
+                }
+            }
+            
+            // Fetch all users at once (single query instead of hundreds)
+            $allLikedUserIds = $allLikedUserIds->unique();
+            $allMutedUserIds = $allMutedUserIds->unique();
+            
+            $likedUsersCache = [];
+            $mutedUsersCache = [];
+            
+            if ($allLikedUserIds->isNotEmpty()) {
+                $likedUsersCache = User::whereIn('id', $allLikedUserIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get()
+                    ->keyBy('id');
+            }
+            
+            if ($allMutedUserIds->isNotEmpty()) {
+                $mutedUsersCache = User::whereIn('id', $allMutedUserIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get()
+                    ->keyBy('id');
+            }
+    
+            // Transform trips using cached data
+            collect($trips)->transform(function ($trip) use ($likedUsersCache, $mutedUsersCache) {
                 $trip->user = $trip->user ? [
                     'id' => $trip->user->id,
                     'photo' => $trip->user->photo,
@@ -226,15 +274,16 @@ class TripController extends Controller
                     'last_name' => $trip->user->last_name,
                 ] : null;
     
-                $trip->droppins->transform(function ($droppin) {
+                $trip->droppins->transform(function ($droppin) use ($likedUsersCache) {
                     $userIds = collect(explode(',', $droppin->likes_user_id))
                         ->filter()
                         ->map(fn($id) => intval(trim($id)))
                         ->unique();
     
-                    $likedUsers = User::whereIn('id', $userIds)
-                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                        ->get();
+                    // Use cached users instead of querying
+                    $likedUsers = $userIds->map(fn($id) => $likedUsersCache->get($id))
+                        ->filter()
+                        ->values();
 
                     $droppin->liked_users = $likedUsers;
     
@@ -255,13 +304,14 @@ class TripController extends Controller
                 });
 
                 $mutedIds = collect(explode(',', $trip->muted_ids))
-                        ->filter()
-                        ->map(fn($id) => intval(trim($id)))
-                        ->unique();
+                    ->filter()
+                    ->map(fn($id) => intval(trim($id)))
+                    ->unique();
                 
-                $mutedUsers = User::whereIn('id', $mutedIds)
-                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                    ->get();
+                // Use cached users instead of querying
+                $mutedUsers = $mutedIds->map(fn($id) => $mutedUsersCache->get($id))
+                    ->filter()
+                    ->values();
             
                 $trip->muted_users = $mutedUsers;
                 return $trip;
@@ -270,6 +320,10 @@ class TripController extends Controller
             return response()->json([
                 'message' => 'All trips retrieved successfully',
                 'trips' => $trips,
+                'current_page' => $paginatedTrips->currentPage(),
+                'last_page' => $paginatedTrips->lastPage(),
+                'per_page' => $paginatedTrips->perPage(),
+                'total' => $paginatedTrips->total(),
             ], 200);
         } catch (Exception $e) {
             return response()->json([
@@ -298,7 +352,50 @@ class TripController extends Controller
             ->where('id', $tripId)  // Filter by trip_id
             ->get();
 
-            $trips->transform(function ($trip) {
+            // Collect all user IDs at once to avoid N+1 queries
+            $allLikedUserIds = collect();
+            $allMutedUserIds = collect();
+            
+            foreach ($trips as $trip) {
+                foreach ($trip->droppins as $droppin) {
+                    if (!empty($droppin->likes_user_id)) {
+                        $userIds = collect(explode(',', $droppin->likes_user_id))
+                            ->filter()
+                            ->map(fn($id) => intval(trim($id)));
+                        $allLikedUserIds = $allLikedUserIds->merge($userIds);
+                    }
+                }
+                
+                if (!empty($trip->muted_ids)) {
+                    $mutedIds = collect(explode(',', $trip->muted_ids))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)));
+                    $allMutedUserIds = $allMutedUserIds->merge($mutedIds);
+                }
+            }
+            
+            // Fetch all users at once (single query instead of hundreds)
+            $allLikedUserIds = $allLikedUserIds->unique();
+            $allMutedUserIds = $allMutedUserIds->unique();
+            
+            $likedUsersCache = [];
+            $mutedUsersCache = [];
+            
+            if ($allLikedUserIds->isNotEmpty()) {
+                $likedUsersCache = User::whereIn('id', $allLikedUserIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get()
+                    ->keyBy('id');
+            }
+            
+            if ($allMutedUserIds->isNotEmpty()) {
+                $mutedUsersCache = User::whereIn('id', $allMutedUserIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get()
+                    ->keyBy('id');
+            }
+
+            $trips->transform(function ($trip) use ($likedUsersCache, $mutedUsersCache) {
                 $trip->user = $trip->user ? [
                     'id' => $trip->user->id,
                     'photo' => $trip->user->photo,
@@ -307,15 +404,16 @@ class TripController extends Controller
                     'last_name' => $trip->user->last_name,
                 ] : null;
 
-                $trip->droppins->transform(function ($droppin) {
+                $trip->droppins->transform(function ($droppin) use ($likedUsersCache) {
                     $userIds = collect(explode(',', $droppin->likes_user_id))
                         ->filter()
                         ->map(fn($id) => intval(trim($id)))
                         ->unique();
 
-                    $likedUsers = User::whereIn('id', $userIds)
-                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                        ->get();
+                    // Use cached users instead of querying
+                    $likedUsers = $userIds->map(fn($id) => $likedUsersCache->get($id))
+                        ->filter()
+                        ->values();
 
                     $droppin->liked_users = $likedUsers;
 
@@ -340,9 +438,10 @@ class TripController extends Controller
                     ->map(fn($id) => intval(trim($id)))
                     ->unique();
             
-                $mutedUsers = User::whereIn('id', $mutedIds)
-                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                    ->get();
+                // Use cached users instead of querying
+                $mutedUsers = $mutedIds->map(fn($id) => $mutedUsersCache->get($id))
+                    ->filter()
+                    ->values();
             
                 $trip->muted_users = $mutedUsers;
 
@@ -425,9 +524,53 @@ class TripController extends Controller
                 'comments.user:id,photo,rolla_username,first_name,last_name',
             ])
             ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
             ->get();
 
-            $trips->transform(function ($trip) {
+            // Collect all user IDs at once to avoid N+1 queries
+            $allLikedUserIds = collect();
+            $allMutedUserIds = collect();
+            
+            foreach ($trips as $trip) {
+                foreach ($trip->droppins as $droppin) {
+                    if (!empty($droppin->likes_user_id)) {
+                        $userIds = collect(explode(',', $droppin->likes_user_id))
+                            ->filter()
+                            ->map(fn($id) => intval(trim($id)));
+                        $allLikedUserIds = $allLikedUserIds->merge($userIds);
+                    }
+                }
+                
+                if (!empty($trip->muted_ids)) {
+                    $mutedIds = collect(explode(',', $trip->muted_ids))
+                        ->filter()
+                        ->map(fn($id) => intval(trim($id)));
+                    $allMutedUserIds = $allMutedUserIds->merge($mutedIds);
+                }
+            }
+            
+            // Fetch all users at once (single query instead of hundreds)
+            $allLikedUserIds = $allLikedUserIds->unique();
+            $allMutedUserIds = $allMutedUserIds->unique();
+            
+            $likedUsersCache = [];
+            $mutedUsersCache = [];
+            
+            if ($allLikedUserIds->isNotEmpty()) {
+                $likedUsersCache = User::whereIn('id', $allLikedUserIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get()
+                    ->keyBy('id');
+            }
+            
+            if ($allMutedUserIds->isNotEmpty()) {
+                $mutedUsersCache = User::whereIn('id', $allMutedUserIds)
+                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
+                    ->get()
+                    ->keyBy('id');
+            }
+
+            $trips->transform(function ($trip) use ($likedUsersCache, $mutedUsersCache) {
                 $trip->user = $trip->user ? [
                     'id' => $trip->user->id,
                     'photo' => $trip->user->photo,
@@ -440,15 +583,16 @@ class TripController extends Controller
                     'garage' => $trip->user->garage_raw
                 ] : null;
             
-                $trip->droppins->transform(function ($droppin) {
+                $trip->droppins->transform(function ($droppin) use ($likedUsersCache) {
                     $userIds = collect(explode(',', $droppin->likes_user_id))
                         ->filter()
                         ->map(fn($id) => intval(trim($id)))
                         ->unique();
 
-                    $likedUsers = User::whereIn('id', $userIds)
-                        ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                        ->get();
+                    // Use cached users instead of querying
+                    $likedUsers = $userIds->map(fn($id) => $likedUsersCache->get($id))
+                        ->filter()
+                        ->values();
 
                     $droppin->liked_users = $likedUsers;
 
@@ -473,9 +617,10 @@ class TripController extends Controller
                     ->map(fn($id) => intval(trim($id)))
                     ->unique();
             
-                $mutedUsers = User::whereIn('id', $mutedIds)
-                    ->select('id', 'photo', 'rolla_username', 'first_name', 'last_name')
-                    ->get();
+                // Use cached users instead of querying
+                $mutedUsers = $mutedIds->map(fn($id) => $mutedUsersCache->get($id))
+                    ->filter()
+                    ->values();
             
                 $trip->muted_users = $mutedUsers;
 
