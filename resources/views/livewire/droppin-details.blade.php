@@ -106,19 +106,7 @@
                 <div class="row">
                     @foreach($likedUsers as $user)
                         <div class="col-md-4 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="me-3">
-                                    @if($user->photo)
-                                        <img src="{{ $user->photo }}" class="rounded-circle" alt="User Photo" style="width: 50px; height: 50px; object-fit: cover;">
-                                    @else
-                                        <img class="rounded-circle" src="{{ asset('assets/img/profile_default.jpg') }}" alt="Default Photo" style="width: 50px; height: 50px; object-fit: cover;">
-                                    @endif
-                                </div>
-                                <div>
-                                    <p class="mb-0 fw-bold">{{ $user->first_name }} {{ $user->last_name }}</p>
-                                    <p class="mb-0 text-muted small">@{{ $user->rolla_username }}</p>
-                                </div>
-                            </div>
+                            <p class="mb-0 fw-bold">{{ $user->first_name }} {{ $user->last_name }}</p>
                         </div>
                     @endforeach
                 </div>
