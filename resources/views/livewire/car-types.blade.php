@@ -46,7 +46,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($carTypes as $carType)
+                @forelse($carTypes as $carType)
                     <tr wire:key="{{ $carType->id }}">
                         <td>{{ $carType->id }}</td>
                         <td>
@@ -57,8 +57,8 @@
                             @endif
                         </td>
                         <td>{{ $carType->car_type }}</td>
-                        <td><small>{{ Str::limit($carType->logo_path, 50) }}</small></td>
-                        <td>{{ $carType->created_at->format('Y-m-d H:i') }}</td>
+                        <td><small>{{ Str::limit($carType->logo_path ?? '', 50) }}</small></td>
+                        <td>{{ $carType->created_at ? $carType->created_at->format('Y-m-d H:i') : 'N/A' }}</td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <a href="/car-type/edit/{{ $carType->id }}" class="me-md-1">
@@ -70,7 +70,11 @@
                             </div>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center">No car types found.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

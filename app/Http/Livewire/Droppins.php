@@ -12,14 +12,18 @@ class Droppins extends Component
 
     public function mount()
     {
-        $this->droppins = Droppin::with('trip')->orderBy('created_at', 'desc')->get();
+        try {
+            $this->droppins = Droppin::orderBy('created_at', 'desc')->get();
+        } catch (\Exception $e) {
+            $this->droppins = collect([]);
+        }
     }
 
     public function remove($id) {
         $droppin = Droppin::find($id);
         if ($droppin) {
             $droppin->delete();
-            $this->droppins = Droppin::with('trip')->orderBy('created_at', 'desc')->get();
+            $this->droppins = Droppin::orderBy('created_at', 'desc')->get();
         }
     }
 

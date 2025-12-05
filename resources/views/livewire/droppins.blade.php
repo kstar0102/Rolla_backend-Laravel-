@@ -51,7 +51,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($droppins as $droppin)
+                @forelse($droppins as $droppin)
                     <tr wire:key="{{ $droppin->id }}">
                         <td>{{ $droppin->id }}</td>
                         <td>
@@ -63,12 +63,22 @@
                         </td>
                         <td>{{ $droppin->trip_id }}</td>
                         <td>{{ $droppin->stop_index }}</td>
-                        <td><small>{{ Str::limit($droppin->image_caption, 30) }}</small></td>
-                        <td>{{ $droppin->likes_user_id ? count(explode(',', $droppin->likes_user_id)) : 0 }}</td>
+                        <td><small>{{ Str::limit($droppin->image_caption ?? '', 30) }}</small></td>
+                        <td>{{ $droppin->likes_user_id ? count(array_filter(explode(',', $droppin->likes_user_id))) : 0 }}</td>
                         <td>{{ $droppin->view_count ?? 0 }}</td>
-                        <td>{{ $droppin->deley_time ? \Carbon\Carbon::parse($droppin->deley_time)->format('Y-m-d H:i') : 'N/A' }}</td>
+                        <td>
+                            @if($droppin->deley_time)
+                                @try
+                                    {{ \Carbon\Carbon::parse($droppin->deley_time)->format('Y-m-d H:i') }}
+                                @catch
+                                    {{ $droppin->deley_time }}
+                                @endtry
+                            @else
+                                N/A
+                            @endif
+                        </td>
                         <td>{{ $droppin->format ?? 'N/A' }}</td>
-                        <td>{{ $droppin->created_at->format('Y-m-d H:i') }}</td>
+                        <td>{{ $droppin->created_at ? $droppin->created_at->format('Y-m-d H:i') : 'N/A' }}</td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <a href="/droppin/edit/{{ $droppin->id }}" class="me-md-1">
@@ -80,7 +90,11 @@
                             </div>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="11" class="text-center">No droppins found.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
