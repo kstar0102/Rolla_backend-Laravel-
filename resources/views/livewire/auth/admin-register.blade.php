@@ -1,5 +1,5 @@
  <main>
-    <title>Rolla Travel Admin - Sign Up page</title>
+    <title>Rolla</title>
         <!-- Section -->
         <section class="vh-lg-100 mt-5 mt-lg-0 bg-soft d-flex align-items-center">
             <div class="container">

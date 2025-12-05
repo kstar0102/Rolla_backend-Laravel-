@@ -15,6 +15,12 @@ use App\Http\Livewire\UserDetails;
 use App\Http\Livewire\UserEdit;
 use App\Http\Livewire\Trips;
 use App\Http\Livewire\TripDetails;
+use App\Http\Livewire\CarTypes;
+use App\Http\Livewire\CarTypeCreate;
+use App\Http\Livewire\CarTypeEdit;
+use App\Http\Livewire\Droppins;
+use App\Http\Livewire\DroppinCreate;
+use App\Http\Livewire\DroppinEdit;
 
 
 use App\Http\Livewire\Err404;
@@ -81,4 +87,10 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('/user/edit/{id}', UserEdit::class)->name('useredit');
     Route::get('/trips', Trips::class)->name('trips');
     Route::get('/trip/details/{id}', TripDetails::class)->name('tripdetails');
+    Route::get('/car-types', CarTypes::class)->name('cartypes');
+    Route::get('/car-type/create', CarTypeCreate::class)->name('cartypecreate');
+    Route::get('/car-type/edit/{id}', CarTypeEdit::class)->name('cartypeedit');
+    Route::get('/droppins', Droppins::class)->name('droppins');
+    Route::get('/droppin/create', DroppinCreate::class)->name('droppincreate');
+    Route::get('/droppin/edit/{id}', DroppinEdit::class)->name('droppinedit');
 });

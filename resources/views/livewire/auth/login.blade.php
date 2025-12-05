@@ -1,5 +1,5 @@
 <main>
-    <title>Volt Laravel Dashboard - Sign In page</title>
+    <title>Rolla</title>
     <!-- Section -->
     <section class="vh-lg-100 mt-5 mt-lg-0 bg-soft d-flex align-items-center">
         <div class="container">
@@ -70,7 +70,7 @@
                         <div class="d-flex justify-content-center align-items-center mt-4">
                             <span class="fw-normal">
                                 Not registered?
-                                <a href="{{ route('register') }}" class="fw-bold">Create account</a>
+                                <a href="{{ route('admin.register') }}" class="fw-bold">Create account</a>
                             </span>
                         </div>
                     </div>

@@ -76,6 +76,27 @@
           <span class="sidebar-text">Trip Management</span>
         </a>
       </li>
+      <li class="nav-item {{ Request::segment(1) == 'car-types' || Request::segment(1) == 'car-type' ? 'active' : '' }}">
+        <a href="/car-types" class="nav-link">
+          <span class="sidebar-icon">
+            <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"></path>
+              <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0016 7h-2z"></path>
+            </svg>
+          </span>
+          <span class="sidebar-text">Car Type Management</span>
+        </a>
+      </li>
+      <li class="nav-item {{ Request::segment(1) == 'droppins' || Request::segment(1) == 'droppin' ? 'active' : '' }}">
+        <a href="/droppins" class="nav-link">
+          <span class="sidebar-icon">
+            <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+            </svg>
+          </span>
+          <span class="sidebar-text">Droppins Management</span>
+        </a>
+      </li>
     </ul>
   </div>
 </nav>

@@ -1,5 +1,5 @@
 <div>
-    <title>Dashboard</title>
+    <title>Rolla</title>
     <div class="row">
         <div class="col-12 mb-4">
             <div class="card border-0 shadow" style="background-color: #fac0b9">
