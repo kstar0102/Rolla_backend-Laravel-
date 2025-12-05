@@ -65,6 +65,7 @@ use App\Http\Livewire\NotificationCreate;
 
 Route::redirect('/', '/login');
 Route::get('/register', Register::class)->name('register');
+Route::get('/admin/register', \App\Http\Livewire\Auth\AdminRegister::class)->name('admin.register');
 Route::get('/login', Login::class)->name('login');
 Route::get('/forgot-password', ForgotPassword::class)->name('forgot-password');
 Route::get('/reset-password/{id}', ResetPassword::class)->name('reset-password')->middleware('signed');
@@ -72,7 +73,7 @@ Route::get('/reset-password/{id}', ResetPassword::class)->name('reset-password')
 Route::get('/404', Err404::class)->name('404');
 Route::get('/500', Err500::class)->name('500');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth:admin'])->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/users', Users::class)->name('users');
     Route::get('/user/create', UserCreate::class)->name('usercreate');
