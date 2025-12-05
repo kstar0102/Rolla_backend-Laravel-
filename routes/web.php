@@ -21,6 +21,7 @@ use App\Http\Livewire\CarTypeEdit;
 use App\Http\Livewire\Droppins;
 use App\Http\Livewire\DroppinCreate;
 use App\Http\Livewire\DroppinEdit;
+use App\Http\Livewire\DroppinDetails;
 
 
 use App\Http\Livewire\Err404;
@@ -92,5 +93,6 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('/car-type/edit/{id}', CarTypeEdit::class)->name('cartypeedit');
     Route::get('/droppins', Droppins::class)->name('droppins');
     Route::get('/droppin/create', DroppinCreate::class)->name('droppincreate');
+    Route::get('/droppin/details/{id}', DroppinDetails::class)->name('droppindetails');
     Route::get('/droppin/edit/{id}', DroppinEdit::class)->name('droppinedit');
 });

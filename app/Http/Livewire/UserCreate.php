@@ -15,7 +15,6 @@ class UserCreate extends Component
     public $first_name;
     public $last_name;
     public $email;
-    public $country;
     public $password;
     public $password_confirmation;
     public $rolla_username;
@@ -27,7 +26,6 @@ class UserCreate extends Component
         $this->first_name = $user->first_name;
         $this->last_name = $user->last_name;
         $this->email = $user->email;
-        $this->country = $user->country;
         $this->rolla_username = $user->rolla_username;
         $this->hear_rolla = $user->hear_rolla;
     }
@@ -38,7 +36,6 @@ class UserCreate extends Component
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|max:255|unique:users,email',
-            'country' => 'required|string|max:255',
             'password' => 'required|string|min:6',
             'rolla_username' => 'required|string|max:255|unique:users,rolla_username',
             'hear_rolla' => 'nullable|string|max:100'
@@ -51,7 +48,6 @@ class UserCreate extends Component
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|max:255|unique:users,email',
-            'country' => 'required|string|max:255',
             'password' => 'required|string|min:6',
             'rolla_username' => 'required|string|max:255|unique:users,rolla_username',
             'hear_rolla' => 'nullable|string|max:100'

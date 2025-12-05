@@ -16,11 +16,9 @@ class UserEdit extends Component
     public $password;
     public $rolla_username;
     public $happy_place;
-    public $country;
     public $hear_rolla;
     public $photo;
     public $bio;
-    public $state_status;
     public $garage;
     public $following_user_id;
 
@@ -33,11 +31,9 @@ class UserEdit extends Component
         $this->email = $this->user->email;
         $this->rolla_username = $this->user->rolla_username;
         $this->happy_place = $this->user->happy_place;
-        $this->country = $this->user->country;
         $this->hear_rolla = $this->user->hear_rolla;
         $this->photo = $this->user->photo;
         $this->bio = $this->user->bio;
-        $this->state_status = $this->user->state_status;
         $this->garage = $this->user->garage;
         $this->following_user_id = $this->user->following_user_id;
     }
@@ -53,7 +49,6 @@ class UserEdit extends Component
             'photo' => 'nullable|string|max:255',
             'bio' => 'nullable|string|max:255',
             'garage' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
             'hear_rolla' => 'nullable|string|max:255'
         ]);
 

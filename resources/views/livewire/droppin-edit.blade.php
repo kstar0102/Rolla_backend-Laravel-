@@ -49,15 +49,10 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label for="image_path">Image Path (URL)</label>
                             <input wire:model.lazy="image_path" class="form-control" id="image_path" type="text" placeholder="https://example.com/image.jpg" value="{{ $image_path }}">
                             @error('image_path') <span class="text-danger">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="format">Format</label>
-                            <input wire:model.lazy="format" class="form-control" id="format" type="text" placeholder="e.g., landscape, portrait" value="{{ $format }}">
-                            @error('format') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
                     </div>
                     <div class="row">

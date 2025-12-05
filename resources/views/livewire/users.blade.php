@@ -40,9 +40,7 @@
                     <th>Picture</th>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Country</th>
                     <th>Nick Name</th>
-                    <th>Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -58,17 +56,7 @@
                         </td>
                         <td>{{ $user->first_name }} {{ $user->last_name }}</td>
                         <td>{{ $user->email }}</td>
-                        <td>{{ $user->country }}</td>
                         <td>{{ $user->rolla_username }}</td>
-                        <td>
-                            @if($user->state_status == 0)
-                                <span class="text-capitalize badge bg-success p-sm-2">Private</span>
-                            @elseif($user->state_status == 1)
-                                <span class="text-capitalize badge bg-primary p-sm-2">Public</span>
-                            @else
-                                <span class="text-capitalize badge bg-warning p-sm-2">N/A</span>
-                            @endif
-                        </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <a href="/user/edit/{{ $user->id }}" class="me-md-1">

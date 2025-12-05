@@ -44,17 +44,12 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="email">Email</label>
                             <input wire:model.lazy="email" class="form-control" id="email" type="email" placeholder="">
                             @error('email') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="country">Country</label>
-                            <input wire:model.lazy="country" class="form-control" id="country" type="text" placeholder="">
-                            @error('country') <span class="text-danger">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="rolla_username">Nick Name</label>
                             <input wire:model.lazy="rolla_username" class="form-control" id="rolla_username" type="rolla_username" placeholder="">
                             @error('rolla_username') <span class="text-danger">{{ $message }}</span> @enderror

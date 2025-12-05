@@ -21,6 +21,8 @@ class Dashboard extends Component
     public $diff_trips_count;
     public $total_comments_count;
     public $diff_comments_count;
+    public $total_droppins_count;
+    public $diff_droppins_count;
     public $weekly_user_data;
     public $weekly_trip_data;
     public $weekly_comment_data;
@@ -69,6 +71,19 @@ class Dashboard extends Component
                                                 ->count();
 
         $this->diff_comments_count = $this_month_total_comments_count - $last_month_total_comments_count;
+
+        $this->total_droppins_count = Droppin::count();
+        $this->total_droppins_count = number_format($this->total_droppins_count);
+
+        $last_month_total_droppins_count = Droppin::whereYear('created_at', Carbon::now()->year)
+                                                ->whereMonth('created_at', Carbon::now()->subMonth()->month)
+                                                ->count();
+
+        $this_month_total_droppins_count = Droppin::whereYear('created_at', Carbon::now()->year)
+                                                ->whereMonth('created_at', Carbon::now()->month)
+                                                ->count();
+
+        $this->diff_droppins_count = $this_month_total_droppins_count - $last_month_total_droppins_count;
 
         // ////////////////////////////////////////////////////////////////////// //
         $temp_weekly_user_data = DB::table('users')

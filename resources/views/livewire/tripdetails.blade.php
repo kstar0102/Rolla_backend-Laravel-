@@ -55,28 +55,34 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <div>
-                            <label for="route_distance">Trip Miles</label>
-                            <p>{{ $trip->trip_miles }}</p>
+                            <label for="sound">Sound</label>
+                            @php
+                                $soundList = $trip->trip_sound ? explode(',', $trip->trip_sound) : [];
+                                $hasSound = !empty($soundList) && $soundList[0] !== 'tripSound' && $soundList[0] !== 'null' && trim($soundList[0]) !== '';
+                            @endphp
+                            @if($hasSound)
+                                <p>
+                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#soundModal" class="text-primary" style="cursor: pointer;">
+                                        <i class="fas fa-music me-2"></i>View Playlist ({{ count($soundList) }} songs)
+                                    </a>
+                                </p>
+                            @else
+                                <p class="text-muted">No playlist available</p>
+                            @endif
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <div>
-                            <label for="last_name">Sound</label>
-                            <p>{{ $trip->trip_sound }}</p>
+                            <label for="start_date">Start Date</label>
+                            <p>{{ $trip->trip_start_date ? \Carbon\Carbon::parse($trip->trip_start_date)->format('M d, Y') : 'N/A' }}</p>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <div>
-                            <label for="last_name">Start Date</label>
-                            <p>{{ $trip->trip_start_date }}</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div>
-                            <label for="last_name">End Date</label>
-                            <p>{{ $trip->trip_end_date }}</p>
+                            <label for="end_date">End Date</label>
+                            <p>{{ $trip->trip_end_date ? \Carbon\Carbon::parse($trip->trip_end_date)->format('M d, Y') : 'N/A' }}</p>
                         </div>
                     </div>
                 </div>
@@ -112,12 +118,18 @@
                 <h2>Droppins</h2>
                 <div class="row">
                     @foreach ($trip->droppins as $droppin)
-                        <div class="col-md-3 col-12">
-                            <img src="{{ $droppin->image_path }}" class="droppin-image rounded" style="width: 100%; height: 100%; cursor: pointer;" onclick="showImage({{ $droppin->id }});" />
+                        <div class="col-md-3 col-12 mb-3">
+                            <img src="{{ $droppin->image_path }}" class="droppin-image rounded" style="width: 100%; height: 200px; object-fit: cover; cursor: pointer;" onclick="showImage({{ $droppin->id }});" />
                         </div>
                     @endforeach
                 </div>
             </div>
+            
+            @if($trip->trip_coordinates && $trip->droppins->count() > 0)
+            <div class="card card-body border-0 shadow mb-4">
+                <div id="map" style="height: 250px; width: 100%; border: 0.5px solid black; position: relative;"></div>
+            </div>
+            @endif
         </div>
         <div class="col-12 col-xl-4">
             <div class="card card-body border-0 shadow mb-4">
@@ -125,9 +137,9 @@
                 <div class="row">
                     <div class="col-3">
                         @if($trip->user->photo)
-                            <img src="{{ asset('storage/' . $trip->user->photo) }}" class="rounded avatar-xl" alt="User Photo">
+                            <img src="{{ $trip->user->photo }}" class="rounded avatar-xl" alt="User Photo" style="width: 80px; height: 80px; object-fit: cover;">
                         @else
-                            <img class="rounded avatar-xl" src="{{ asset('assets/img/profile_default.jpg') }}" alt="Default Photo">
+                            <img class="rounded avatar-xl" src="{{ asset('assets/img/profile_default.jpg') }}" alt="Default Photo" style="width: 80px; height: 80px; object-fit: cover;">
                         @endif
                     </div>
                     <div class="col-9">
@@ -160,8 +172,58 @@
     </div>
 </div>
 
+<!-- Sound Modal -->
+<div class="modal fade" id="soundModal" tabindex="-1" aria-labelledby="soundModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="soundModalLabel">Trip Playlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @php
+                    $soundList = $trip->trip_sound ? explode(',', $trip->trip_sound) : [];
+                    $soundList = array_filter($soundList, function($song) {
+                        return trim($song) !== '' && $song !== 'tripSound' && $song !== 'null';
+                    });
+                @endphp
+                @if(count($soundList) > 0)
+                    <ul class="list-group">
+                        @foreach($soundList as $index => $song)
+                            <li class="list-group-item d-flex align-items-center">
+                                <i class="fas fa-music me-3 text-primary"></i>
+                                <span>{{ trim($song) }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="text-muted">No songs in playlist</p>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+
 <script>
     var droppins = {!! json_encode($trip->droppins) !!};
+    var tripCoordinates = {!! json_encode($trip->trip_coordinates) !!};
+    var stopLocations = {!! json_encode($trip->stop_locations) !!};
+    var mapStyleValue = '{{ $trip->map_style ?? "0" }}';
+    
+    // Convert map style value to Mapbox style ID (like frontend)
+    function getMapStyleId(styleValue) {
+        switch(styleValue) {
+            case "1": return 'satellite-v9';
+            case "2": return 'light-v10';
+            case "3": return 'dark-v10';
+            case "0":
+            default: return 'streets-v11';
+        }
+    }
+    var mapStyleId = getMapStyleId(mapStyleValue);
 
     function showImage(id) {
         let droppin = droppins.find(d => d.id === id);
@@ -196,4 +258,131 @@
             console.error('Droppin not found for id:', id);
         }
     }
+
+    // Initialize Map - Styled like frontend
+    @if($trip->trip_coordinates && $trip->droppins->count() > 0)
+    document.addEventListener('DOMContentLoaded', function() {
+        mapboxgl.accessToken = 'pk.eyJ1Ijoicm9sbGExIiwiYSI6ImNseGppNHN5eDF3eHoyam9oN2QyeW5mZncifQ.iLIVq7aRpvMf6J3NmQTNAw';
+        
+        // Use the converted map style ID
+        var styleUrl = 'mapbox://styles/mapbox/' + mapStyleId.replace('-v11', '').replace('-v9', '').replace('-v10', '');
+        
+        // Calculate initial center and zoom from coordinates
+        var initialCenter = [-122.4194, 37.7749]; // Default SF
+        var initialZoom = 12;
+        
+        if (tripCoordinates && tripCoordinates.length > 0) {
+            var firstCoord = tripCoordinates[0];
+            initialCenter = [firstCoord[1], firstCoord[0]]; // [lng, lat]
+        } else if (stopLocations && stopLocations.length > 0) {
+            var firstLoc = stopLocations[0];
+            initialCenter = [firstLoc[1], firstLoc[0]]; // [lng, lat]
+        }
+        
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: styleUrl,
+            center: initialCenter,
+            zoom: initialZoom
+        });
+
+        map.on('load', function() {
+            // Add route line (polyline)
+            if (tripCoordinates && tripCoordinates.length > 0) {
+                var coordinates = tripCoordinates.map(function(coord) {
+                    return [coord[1], coord[0]]; // [lng, lat]
+                });
+
+                map.addSource('route', {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'Feature',
+                        'properties': {},
+                        'geometry': {
+                            'type': 'LineString',
+                            'coordinates': coordinates
+                        }
+                    }
+                });
+
+                map.addLayer({
+                    'id': 'route',
+                    'type': 'line',
+                    'source': 'route',
+                    'layout': {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    'paint': {
+                        'line-color': '#4285F4', // Blue like frontend
+                        'line-width': 4.0
+                    }
+                });
+            }
+
+            // Add droppin markers - styled like frontend
+            if (stopLocations && stopLocations.length > 0) {
+                stopLocations.forEach(function(location, index) {
+                    var droppin = droppins.find(function(d) {
+                        return d.stop_index == (index + 1);
+                    });
+
+                    // Create marker element matching frontend style
+                    var el = document.createElement('div');
+                    el.style.width = '14px';
+                    el.style.height = '14px';
+                    el.style.borderRadius = '50%';
+                    el.style.backgroundColor = 'white';
+                    el.style.border = '1px solid black';
+                    el.style.display = 'flex';
+                    el.style.alignItems = 'center';
+                    el.style.justifyContent = 'center';
+                    el.style.fontWeight = 'bold';
+                    el.style.fontSize = '11px';
+                    el.style.color = 'black';
+                    el.style.cursor = 'pointer';
+                    el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+                    
+                    var stopIndex = droppin ? droppin.stop_index : (index + 1);
+                    el.textContent = stopIndex.toString();
+
+                    // Make marker clickable
+                    if (droppin) {
+                        el.addEventListener('click', function() {
+                            showImage(droppin.id);
+                        });
+                    }
+
+                    new mapboxgl.Marker({
+                        element: el,
+                        anchor: 'center'
+                    })
+                        .setLngLat([location[1], location[0]]) // [lng, lat]
+                        .addTo(map);
+                });
+            }
+
+            // Fit map to show all markers and route
+            if (stopLocations && stopLocations.length > 0) {
+                var bounds = new mapboxgl.LngLatBounds();
+                
+                // Add all stop locations to bounds
+                stopLocations.forEach(function(location) {
+                    bounds.extend([location[1], location[0]]); // [lng, lat]
+                });
+                
+                // Add route coordinates to bounds if available
+                if (tripCoordinates && tripCoordinates.length > 0) {
+                    tripCoordinates.forEach(function(coord) {
+                        bounds.extend([coord[1], coord[0]]); // [lng, lat]
+                    });
+                }
+                
+                map.fitBounds(bounds, {
+                    padding: { top: 20, bottom: 20, left: 20, right: 20 }
+                });
+            }
+        });
+    });
+    @endif
 </script>

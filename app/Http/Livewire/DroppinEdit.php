@@ -14,7 +14,6 @@ class DroppinEdit extends Component
     public $image_path = '';
     public $image_caption = '';
     public $deley_time = '';
-    public $format = '';
     public $trips;
 
     public function mount($id)
@@ -25,7 +24,6 @@ class DroppinEdit extends Component
         $this->image_path = $this->droppin->image_path;
         $this->image_caption = $this->droppin->image_caption;
         $this->deley_time = $this->droppin->deley_time;
-        $this->format = $this->droppin->format;
         $this->trips = Trip::all();
     }
 
@@ -35,7 +33,6 @@ class DroppinEdit extends Component
         'image_path' => 'required|string|max:500',
         'image_caption' => 'nullable|string|max:500',
         'deley_time' => 'nullable|date',
-        'format' => 'nullable|string|max:50',
     ];
 
     public function update()
@@ -48,7 +45,6 @@ class DroppinEdit extends Component
             'image_path' => $this->image_path,
             'image_caption' => $this->image_caption ?? '',
             'deley_time' => $this->deley_time ?: null,
-            'format' => $this->format ?? null,
         ]);
 
         return redirect()->route('droppins');

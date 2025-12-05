@@ -13,7 +13,6 @@ class DroppinCreate extends Component
     public $image_path = '';
     public $image_caption = '';
     public $deley_time = '';
-    public $format = '';
     public $trips;
 
     public function mount()
@@ -27,7 +26,6 @@ class DroppinCreate extends Component
         'image_path' => 'required|string|max:500',
         'image_caption' => 'nullable|string|max:500',
         'deley_time' => 'nullable|date',
-        'format' => 'nullable|string|max:50',
     ];
 
     public function save()
@@ -40,7 +38,6 @@ class DroppinCreate extends Component
             'image_path' => $this->image_path,
             'image_caption' => $this->image_caption ?? '',
             'deley_time' => $this->deley_time ?: null,
-            'format' => $this->format ?? null,
         ]);
 
         return redirect()->route('droppins');

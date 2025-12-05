@@ -33,9 +33,9 @@
                         <div class="profile-cover rounded-top" data-background="../../assets/img/profile-cover.jpg"></div>
                         <div class="card-body pb-5">
                             @if($photo)
-                                <img src="{{ $photo }}" class="rounded avatar-xl mt-n6" alt="User Photo">
+                                <img src="{{ $photo }}" class="rounded avatar-xl mt-n6" alt="User Photo" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid white;">
                             @else
-                                <img class="rounded avatar-xl mt-n6" src="{{ asset('assets/img/profile_default.jpg') }}" alt="Default Photo">
+                                <img class="rounded avatar-xl mt-n6" src="{{ asset('assets/img/profile_default.jpg') }}" alt="Default Photo" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid white;">
                             @endif
                         </div>
                     </div>
@@ -82,20 +82,8 @@
                 <div class="row">
                     <div class="col-sm-4 mb-3">
                         <div class="form-group">
-                            <label for="country">Country</label>
-                            <h5>{{$country}}</h5>
-                        </div>
-                    </div>
-                    <div class="col-sm-4 mb-3">
-                        <div class="form-group">
                             <label for="hear_rolla">Hear From</label>
                             <h5>{{$hear_rolla}}</h5>
-                        </div>
-                    </div>
-                    <div class="col-sm-4 mb-3">
-                        <div class="form-group">
-                            <label for="state_status">Status</label>
-                            <h5>{{$state_status}}</h5>
                         </div>
                     </div>
                 </div>
@@ -106,6 +94,34 @@
                             <p>{{$bio}}</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-body text-center">
+                    <h3 class="h2 mb-0">{{ $tripsCount }}</h3>
+                    <p class="text-muted mb-0">Trips</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-body text-center">
+                    <h3 class="h2 mb-0">{{ $followersCount }}</h3>
+                    <p class="text-muted mb-0">Followers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-body text-center">
+                    <h3 class="h2 mb-0">{{ $followingsCount }}</h3>
+                    <p class="text-muted mb-0">Following</p>
                 </div>
             </div>
         </div>

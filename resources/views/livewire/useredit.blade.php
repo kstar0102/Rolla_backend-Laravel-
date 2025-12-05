@@ -73,26 +73,9 @@
                     <div class="row">
                         <div class="col-sm-4 mb-3">
                             <div class="form-group">
-                                <label for="country">Country</label>
-                                <input wire:model.lazy="country" class="form-control" id="country" type="text" placeholder="Enter country" value="{{ $country }}">
-                                @error('country') <span class="text-danger">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-sm-4 mb-3">
-                            <div class="form-group">
                                 <label for="hear_rolla">Hear From</label>
                                 <input wire:model.lazy="hear_rolla" class="form-control" id="hear_rolla" type="text" placeholder="" value="{{ $hear_rolla }}">
                                 @error('hear_rolla') <span class="text-danger">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-sm-4 mb-3">
-                            <div class="form-group">
-                                <label for="state_status">Status</label>
-                                <select wire:model.lazy="state_status" class="form-select" id="state_status">
-                                    <option value="0" {{ $state_status == 0 ? 'selected' : '' }}>Private</option>
-                                    <option value="1" {{ $state_status == 1 ? 'selected' : '' }}>Public</option>
-                                </select>
-                                @error('state_status') <span class="text-danger">{{ $message }}</span> @enderror 
                             </div>
                         </div>
                     </div>

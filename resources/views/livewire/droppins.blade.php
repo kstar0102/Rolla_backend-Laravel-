@@ -45,7 +45,6 @@
                     <th>Likes</th>
                     <th>Views</th>
                     <th>Delay Time</th>
-                    <th>Format</th>
                     <th>Created At</th>
                     <th>Action</th>
                 </tr>
@@ -65,26 +64,41 @@
                         <td>{{ $droppin->stop_index }}</td>
                         <td><small>{{ Str::limit($droppin->image_caption ?? '', 30) }}</small></td>
                         <td>{{ $droppin->likes_user_id ? count(array_filter(explode(',', $droppin->likes_user_id))) : 0 }}</td>
-                        <td>{{ $droppin->view_count ?? 0 }}</td>
                         <td>
-                            @if($droppin->deley_time)
+                            @if($droppin->view_count)
+                                @php
+                                    $viewIds = array_filter(explode(',', $droppin->view_count));
+                                    $viewCount = count($viewIds);
+                                @endphp
+                                {{ $viewCount }}
+                            @else
+                                0
+                            @endif
+                        </td>
+                        <td>
+                            @if($droppin->deley_time && $droppin->created_at)
+                                @php
+                                    $createdAt = \Carbon\Carbon::parse($droppin->created_at);
+                                    $delayTime = \Carbon\Carbon::parse($droppin->deley_time);
+                                @endphp
+                                <small>From {{ $createdAt->format('M d, Y H:i') }}<br>to {{ $delayTime->format('M d, Y H:i') }}</small>
+                            @elseif($droppin->deley_time)
                                 @try
-                                    {{ \Carbon\Carbon::parse($droppin->deley_time)->format('Y-m-d H:i') }}
+                                    <small>To: {{ \Carbon\Carbon::parse($droppin->deley_time)->format('M d, Y H:i') }}</small>
                                 @catch
-                                    {{ $droppin->deley_time }}
+                                    <small>{{ $droppin->deley_time }}</small>
                                 @endtry
                             @else
                                 N/A
                             @endif
                         </td>
-                        <td>{{ $droppin->format ?? 'N/A' }}</td>
                         <td>{{ $droppin->created_at ? $droppin->created_at->format('Y-m-d H:i') : 'N/A' }}</td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <a href="/droppin/edit/{{ $droppin->id }}" class="me-md-1">
-                                    <i class="fas fa-edit text-info"></i>
+                                <a href="/droppin/details/{{ $droppin->id }}" class="me-md-1" title="View Droppin Details">
+                                    <i class="fas fa-eye text-primary"></i>
                                 </a>
-                                <a href="javascript: void(0);" class="me-md-1 droppin-del-btn" data-id="{{ $droppin->id }}">
+                                <a href="javascript: void(0);" class="me-md-1 droppin-del-btn" data-id="{{ $droppin->id }}" title="Delete Droppin">
                                     <i class="fas fa-trash text-danger"></i>
                                 </a>
                             </div>
@@ -92,7 +106,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11" class="text-center">No droppins found.</td>
+                        <td colspan="10" class="text-center">No droppins found.</td>
                     </tr>
                 @endforelse
             </tbody>
