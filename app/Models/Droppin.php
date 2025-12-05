@@ -10,6 +10,8 @@ class Droppin extends Model
 {
     use HasFactory, HasApiTokens;
 
+    protected $table = 'droppins';
+
     protected $fillable = [
         'trip_id',
         'stop_index',
