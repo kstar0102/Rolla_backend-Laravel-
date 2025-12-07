@@ -50,6 +50,8 @@ Route::group(['prefix' => 'tests'], static function () {
 Route::group(['prefix' => 'auth'], static function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('google-login', [AuthController::class, 'googleLogin']);
+    Route::post('complete-google-registration', [AuthController::class, 'completeGoogleRegistration']);
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
     Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);   
     Route::post('/password/verify', [AuthController::class, 'verifyResetCode']);  

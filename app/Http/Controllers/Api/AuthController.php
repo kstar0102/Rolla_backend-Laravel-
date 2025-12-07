@@ -282,4 +282,172 @@ class AuthController extends Controller
     {
         
     }
+
+    public function googleLogin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'google_id' => 'required|string',
+            'email' => 'required|email',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'photo' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        try {
+            // Check if user exists by google_id or email
+            $user = User::where('google_id', $request->google_id)
+                ->orWhere('email', $request->email)
+                ->first();
+
+            if ($user) {
+                // User exists - update google_id if not set
+                if (!$user->google_id) {
+                    $user->google_id = $request->google_id;
+                    $user->save();
+                }
+
+                // Check if user has a username
+                if (!$user->rolla_username) {
+                    return response()->json([
+                        'message' => 'Username required',
+                        'needs_username' => true,
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'first_name' => $user->first_name,
+                        'last_name' => $user->last_name,
+                    ], 200);
+                }
+
+                // User has username - proceed with login
+                return $this->generateLoginResponse($user);
+            } else {
+                // New user - create account but require username
+                $user = new User([
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'email' => $request->email,
+                    'google_id' => $request->google_id,
+                    'photo' => $request->photo,
+                    'password' => null, // No password for Google users
+                ]);
+
+                $user->save();
+
+                return response()->json([
+                    'message' => 'Username required',
+                    'needs_username' => true,
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                ], 200);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred during Google login',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function completeGoogleRegistration(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer|exists:users,id',
+            'rolla_username' => 'required|string|max:255|unique:users,rolla_username',
+            'hear_rolla' => 'required|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        try {
+            $user = User::find($request->user_id);
+            
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+
+            if ($user->rolla_username) {
+                return response()->json(['error' => 'Username already set'], 422);
+            }
+
+            $user->rolla_username = $request->rolla_username;
+            $user->hear_rolla = $request->hear_rolla;
+            $user->save();
+
+            return $this->generateLoginResponse($user);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function generateLoginResponse($user)
+    {
+        $tripMilesSum = Trip::where('user_id', $user->id)
+            ->get()
+            ->reduce(function ($sum, $trip) {
+                $miles = floatval(str_replace('km', '', $trip->trip_miles));
+                return $sum + $miles;
+            }, 0);
+        $tripMilesSum = number_format($tripMilesSum, 1, '.', '');
+
+        $trips = Trip::where('user_id', $user->id)
+            ->where(function ($query) {
+                $query->where('trip_end_date', '>=', now())
+                    ->orWhereNull('trip_end_date');
+            })
+            ->pluck('id')
+            ->toArray();
+
+        $droppins = Droppin::whereIn(
+            'trip_id',
+            Trip::where('user_id', $user->id)->pluck('id')
+        )->get()
+        ->map(function ($droppin) {
+            $likesUserIds = collect(explode(',', $droppin->likes_user_id))
+                ->filter()
+                ->map(fn($id) => intval(trim($id)))
+                ->unique();
+
+            $likedUsers = User::whereIn('id', $likesUserIds)
+                ->select('id', 'photo', 'first_name', 'last_name', 'rolla_username')
+                ->get();
+
+            $droppin->liked_users = $likedUsers;
+
+            return $droppin;
+        });
+
+        $totalTrips = Trip::where('user_id', $user->id)->count();
+        $followingUsers = $user->getFollowingUsers();
+        $followingCount = collect(explode(',', $user->following_user_id))
+            ->filter()
+            ->map(fn($id) => intval(trim($id)))
+            ->unique()
+            ->count();
+        $garageDetails = $user->getGarageDetails();
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login success',
+            'token' => $token,
+            'userData' => $user,
+            'trip_miles_sum' => $tripMilesSum,
+            'trips' => $trips,
+            'droppins' => $droppins,
+            'total_trips' => $totalTrips,
+            'following_users' => $followingUsers,
+            'following_count' => $followingCount,
+            'garages' => $garageDetails
+        ], 200);
+    }
 }
