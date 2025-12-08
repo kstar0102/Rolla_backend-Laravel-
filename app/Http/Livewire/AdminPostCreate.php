@@ -7,6 +7,7 @@ use App\Models\AdminPost;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 
 class AdminPostCreate extends Component
 {
@@ -16,6 +17,7 @@ class AdminPostCreate extends Component
     public $content = '';
     public $image;
     public $is_active = true;
+    public $uploading = false;
 
     protected $rules = [
         'title' => 'required|string|max:255',
@@ -28,16 +30,37 @@ class AdminPostCreate extends Component
     {
         $this->validate();
 
-        $imagePath = null;
+        $imageUrl = null;
         if ($this->image) {
-            $imagePath = $this->image->store('admin_posts', 'public');
+            $this->uploading = true;
+            try {
+                // Upload to AWS S3 via API endpoint
+                $response = Http::attach(
+                    'image',
+                    file_get_contents($this->image->getRealPath()),
+                    $this->image->getClientOriginalName()
+                )->post(url('/api/upload-image'));
+
+                if ($response->successful() && $response->json('url')) {
+                    $imageUrl = $response->json('url');
+                } else {
+                    session()->flash('error', 'Failed to upload image. Please try again.');
+                    $this->uploading = false;
+                    return;
+                }
+            } catch (\Exception $e) {
+                session()->flash('error', 'Error uploading image: ' . $e->getMessage());
+                $this->uploading = false;
+                return;
+            }
+            $this->uploading = false;
         }
 
         AdminPost::create([
             'admin_id' => Auth::guard('admin')->id(),
             'title' => $this->title,
             'content' => $this->content,
-            'image_path' => $imagePath,
+            'image_path' => $imageUrl,
             'is_active' => $this->is_active,
         ]);
 

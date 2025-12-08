@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\AdminPost;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 
 class AdminPostEdit extends Component
 {
@@ -18,6 +19,7 @@ class AdminPostEdit extends Component
     public $image;
     public $existing_image;
     public $is_active;
+    public $uploading = false;
 
     public function mount($id)
     {
@@ -43,19 +45,36 @@ class AdminPostEdit extends Component
     {
         $this->validate();
 
-        $imagePath = $this->existing_image;
+        $imageUrl = $this->existing_image;
         if ($this->image) {
-            // Delete old image
-            if ($this->existing_image) {
-                Storage::disk('public')->delete($this->existing_image);
+            $this->uploading = true;
+            try {
+                // Upload to AWS S3 via API endpoint
+                $response = Http::attach(
+                    'image',
+                    file_get_contents($this->image->getRealPath()),
+                    $this->image->getClientOriginalName()
+                )->post(url('/api/upload-image'));
+
+                if ($response->successful() && $response->json('url')) {
+                    $imageUrl = $response->json('url');
+                } else {
+                    session()->flash('error', 'Failed to upload image. Please try again.');
+                    $this->uploading = false;
+                    return;
+                }
+            } catch (\Exception $e) {
+                session()->flash('error', 'Error uploading image: ' . $e->getMessage());
+                $this->uploading = false;
+                return;
             }
-            $imagePath = $this->image->store('admin_posts', 'public');
+            $this->uploading = false;
         }
 
         $this->post->update([
             'title' => $this->title,
             'content' => $this->content,
-            'image_path' => $imagePath,
+            'image_path' => $imageUrl,
             'is_active' => $this->is_active,
         ]);
 

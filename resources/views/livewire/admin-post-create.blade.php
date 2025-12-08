@@ -53,7 +53,10 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Create Post</button>
+        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+            <span wire:loading.remove>Create Post</span>
+            <span wire:loading>Uploading Image...</span>
+        </button>
         <a href="/admin-posts" class="btn btn-secondary">Cancel</a>
     </form>
 </div>

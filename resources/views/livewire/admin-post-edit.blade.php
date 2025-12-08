@@ -40,7 +40,7 @@
                             @if($image)
                                 <img src="{{ $image->temporaryUrl() }}" alt="Preview" style="max-width: 200px; margin-top: 10px;">
                             @elseif($existing_image)
-                                <img src="{{ asset('storage/' . $existing_image) }}" alt="Current image" style="max-width: 200px; margin-top: 10px;">
+                                <img src="{{ $existing_image }}" alt="Current image" style="max-width: 200px; margin-top: 10px;">
                             @endif
                         </div>
                     </div>
@@ -55,7 +55,10 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Update Post</button>
+        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+            <span wire:loading.remove>Update Post</span>
+            <span wire:loading>Uploading Image...</span>
+        </button>
         <a href="/admin-posts" class="btn btn-secondary">Cancel</a>
     </form>
 </div>

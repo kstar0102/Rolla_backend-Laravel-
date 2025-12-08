@@ -50,7 +50,7 @@
                         <td>{{ Str::limit($post->content, 50) }}</td>
                         <td>
                             @if($post->image_path)
-                                <img src="{{ asset('storage/' . $post->image_path) }}" alt="Post image" style="max-width: 50px; max-height: 50px;">
+                                <img src="{{ $post->image_path }}" alt="Post image" style="max-width: 50px; max-height: 50px; object-fit: cover;">
                             @else
                                 <span class="text-muted">No image</span>
                             @endif
@@ -66,13 +66,10 @@
                         <td>{{ $post->created_at->format('Y-m-d H:i') }}</td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <a href="/admin-post/edit/{{ $post->id }}" class="me-md-1">
-                                    <i class="fas fa-edit text-info"></i>
+                                <a href="/admin-post/edit/{{ $post->id }}" class="me-md-1" title="View Details">
+                                    <i class="fas fa-eye text-info"></i>
                                 </a>
-                                <button wire:click="toggleActive({{ $post->id }})" class="btn btn-link text-primary me-md-1">
-                                    <i class="fas fa-toggle-{{ $post->is_active ? 'on' : 'off' }}"></i>
-                                </button>
-                                <button wire:click="remove({{ $post->id }})" class="btn btn-link text-danger" onclick="return confirm('Are you sure you want to delete this post?')">
+                                <button wire:click="remove({{ $post->id }})" class="btn btn-link text-danger" onclick="return confirm('Are you sure you want to delete this post?')" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
