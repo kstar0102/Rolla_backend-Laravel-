@@ -76,8 +76,7 @@
                                 <a href="/admin-post/edit/{{ $post->id }}" class="me-md-1" title="Edit Post">
                                     <i class="fas fa-edit text-info"></i>
                                 </a>
-                                <button wire:click="remove({{ $post->id }})" 
-                                        onclick="return confirm('Are you sure you want to delete this post?')" 
+                                <button onclick="if(confirm('Are you sure you want to delete this post?')) { @this.call('remove', {{ $post->id }}) }" 
                                         class="btn btn-link text-danger p-0 me-md-1" 
                                         title="Delete"
                                         style="border: none; background: none;">
