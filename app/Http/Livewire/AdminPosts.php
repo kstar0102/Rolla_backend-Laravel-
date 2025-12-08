@@ -17,11 +17,17 @@ class AdminPosts extends Component
 
     public function remove($id)
     {
-        $post = AdminPost::find($id);
-        if ($post) {
-            $post->delete();
-            $this->posts = AdminPost::with('admin')->orderBy('created_at', 'desc')->get();
-            session()->flash('message', 'Admin post deleted successfully.');
+        try {
+            $post = AdminPost::find($id);
+            if ($post) {
+                $post->delete();
+                $this->posts = AdminPost::with('admin')->orderBy('created_at', 'desc')->get();
+                session()->flash('message', 'Admin post deleted successfully.');
+            } else {
+                session()->flash('error', 'Post not found.');
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error deleting post: ' . $e->getMessage());
         }
     }
 

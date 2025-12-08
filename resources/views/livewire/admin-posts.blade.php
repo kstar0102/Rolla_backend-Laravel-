@@ -28,6 +28,13 @@
         </div>
     @endif
 
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     <div class="card card-body shadow border-0 table-wrapper table-responsive">
         <table class="table table-flush" id="datatable">
             <thead class="thead-light">
@@ -66,10 +73,14 @@
                         <td>{{ $post->created_at->format('Y-m-d H:i') }}</td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <a href="/admin-post/edit/{{ $post->id }}" class="me-md-1" title="View Details">
-                                    <i class="fas fa-eye text-info"></i>
+                                <a href="/admin-post/edit/{{ $post->id }}" class="me-md-1" title="Edit Post">
+                                    <i class="fas fa-edit text-info"></i>
                                 </a>
-                                <button wire:click="remove({{ $post->id }})" class="btn btn-link text-danger" onclick="return confirm('Are you sure you want to delete this post?')" title="Delete">
+                                <button wire:click="remove({{ $post->id }})" 
+                                        onclick="return confirm('Are you sure you want to delete this post?')" 
+                                        class="btn btn-link text-danger p-0 me-md-1" 
+                                        title="Delete"
+                                        style="border: none; background: none;">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
