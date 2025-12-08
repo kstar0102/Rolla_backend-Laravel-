@@ -7,6 +7,8 @@ use App\Models\AdminPost;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Aws\S3\S3Client;
+use Illuminate\Support\Facades\Log;
 
 class AdminPostCreate extends Component
 {
@@ -48,11 +50,30 @@ class AdminPostCreate extends Component
 
             $this->uploading = true;
             try {
-                // Upload directly to AWS S3
-                $path = $this->image->store('admin_posts', 's3');
-                Storage::disk('s3')->setVisibility($path, 'public');
-                $imageUrl = Storage::disk('s3')->url($path);
+                // Upload to AWS S3 using AWS SDK
+                $s3Client = new S3Client([
+                    'version' => 'latest',
+                    'region' => env('AWS_DEFAULT_REGION'),
+                    'credentials' => [
+                        'key' => env('AWS_ACCESS_KEY_ID'),
+                        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                    ],
+                ]);
+
+                $fileName = 'admin_posts/' . uniqid() . '_' . time() . '.' . $this->image->getClientOriginalExtension();
+                $fileContents = file_get_contents($this->image->getRealPath());
+
+                $result = $s3Client->putObject([
+                    'Bucket' => env('AWS_BUCKET'),
+                    'Key' => $fileName,
+                    'Body' => $fileContents,
+                    'ACL' => 'public-read',
+                    'ContentType' => $this->image->getMimeType(),
+                ]);
+
+                $imageUrl = $result['ObjectURL'] ?? env('AWS_URL') . '/' . $fileName;
             } catch (\Exception $e) {
+                Log::error('S3 Upload Error: ' . $e->getMessage());
                 session()->flash('error', 'Error uploading image: ' . $e->getMessage());
                 $this->uploading = false;
                 return;

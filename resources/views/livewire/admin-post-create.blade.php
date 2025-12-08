@@ -61,9 +61,9 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
-            <span wire:loading.remove>Create Post</span>
-            <span wire:loading>Uploading Image...</span>
+        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="save">
+            <span wire:loading.remove wire:target="save">Create Post</span>
+            <span wire:loading wire:target="save">Creating Post...</span>
         </button>
         <a href="/admin-posts" class="btn btn-secondary">Cancel</a>
     </form>
