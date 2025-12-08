@@ -20,6 +20,7 @@ class AdminSeeder extends Seeder
             'last_name' => 'User',
             'email' => 'admin@gmail.com',
             'password' => Hash::make('admin123'),
+            'is_active' => 1, // First admin is active by default
             'created_at' => now(),
             'updated_at' => now(),
         ]);

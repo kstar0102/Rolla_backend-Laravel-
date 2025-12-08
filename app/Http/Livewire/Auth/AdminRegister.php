@@ -41,11 +41,14 @@ class AdminRegister extends Component
             'last_name' => $this->last_name,
             'email' => $this->email,
             'password' => Hash::make($this->password),
+            'is_active' => 0, // New admins are inactive by default
         ]);
 
-        Auth::guard('admin')->login($admin);
+        // Don't auto-login inactive admins
+        // They need to be activated by an active admin first
+        session()->flash('message', 'Registration successful! Please wait for an active admin to activate your account.');
 
-        return redirect('/dashboard');
+        return redirect('/login');
     }
 
     public function render()

@@ -35,6 +35,13 @@ class Login extends Component
         $credentials = $this->validate();
         if (Auth::guard('admin')->attempt(['email' => $this->email, 'password' => $this->password], $this->remember_me)) {
             $admin = Admin::where(['email' => $this->email])->first();
+            
+            // Check if admin is active
+            if (!$admin->is_active) {
+                Auth::guard('admin')->logout();
+                return $this->addError('email', 'Your account is not active. Please contact an active admin to activate your account.');
+            }
+            
             Auth::guard('admin')->login($admin, $this->remember_me);
             return redirect()->intended('/dashboard');
         } else {
