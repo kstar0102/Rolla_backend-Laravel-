@@ -35,12 +35,13 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="image">Image (Optional - leave blank to keep current)</label>
-                            <input wire:model="image" type="file" class="form-control" id="image" accept="image/*">
-                            @error('image') <span class="text-danger">{{ $message }}</span> @enderror
+                            <input wire:model="image" type="file" class="form-control" id="image" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                            <small class="form-text text-muted">Only JPEG, PNG, GIF, and WEBP images are allowed. Max size: 2MB.</small>
+                            @error('image') <span class="text-danger d-block">{{ $message }}</span> @enderror
                             @if($image)
-                                <img src="{{ $image->temporaryUrl() }}" alt="Preview" style="max-width: 200px; margin-top: 10px;">
+                                <img src="{{ $image->temporaryUrl() }}" alt="Preview" style="max-width: 200px; margin-top: 10px; border-radius: 4px;">
                             @elseif($existing_image)
-                                <img src="{{ $existing_image }}" alt="Current image" style="max-width: 200px; margin-top: 10px;">
+                                <img src="{{ $existing_image }}" alt="Current image" style="max-width: 200px; margin-top: 10px; border-radius: 4px;">
                             @endif
                         </div>
                     </div>

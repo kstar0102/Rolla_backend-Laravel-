@@ -37,8 +37,14 @@ class AdminPostEdit extends Component
     protected $rules = [
         'title' => 'required|string|max:255',
         'content' => 'required|string',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         'is_active' => 'boolean',
+    ];
+
+    protected $messages = [
+        'image.image' => 'The file must be an image.',
+        'image.mimes' => 'Only JPEG, JPG, PNG, GIF, and WEBP images are allowed.',
+        'image.max' => 'The image size must not exceed 2MB.',
     ];
 
     public function update()
@@ -47,6 +53,15 @@ class AdminPostEdit extends Component
 
         $imageUrl = $this->existing_image;
         if ($this->image) {
+            // Additional validation: ensure it's actually an image
+            $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            $mimeType = $this->image->getMimeType();
+            
+            if (!in_array($mimeType, $allowedMimes)) {
+                session()->flash('error', 'Only image files (JPEG, PNG, GIF, WEBP) are allowed.');
+                return;
+            }
+
             $this->uploading = true;
             try {
                 // Upload to AWS S3 via API endpoint
@@ -59,7 +74,8 @@ class AdminPostEdit extends Component
                 if ($response->successful() && $response->json('url')) {
                     $imageUrl = $response->json('url');
                 } else {
-                    session()->flash('error', 'Failed to upload image. Please try again.');
+                    $errorMsg = $response->json('message') ?? 'Failed to upload image. Please try again.';
+                    session()->flash('error', $errorMsg);
                     $this->uploading = false;
                     return;
                 }
