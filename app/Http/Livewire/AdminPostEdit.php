@@ -82,11 +82,13 @@ class AdminPostEdit extends Component
                     'Bucket' => env('AWS_BUCKET'),
                     'Key' => $fileName,
                     'Body' => $fileContents,
-                    'ACL' => 'public-read',
                     'ContentType' => $this->image->getMimeType(),
                 ]);
 
-                $imageUrl = $result['ObjectURL'] ?? env('AWS_URL') . '/' . $fileName;
+                // Generate public URL (bucket should have public read policy)
+                $region = env('AWS_DEFAULT_REGION', 'us-east-2');
+                $bucket = env('AWS_BUCKET');
+                $imageUrl = "https://{$bucket}.s3.{$region}.amazonaws.com/{$fileName}";
             } catch (\Exception $e) {
                 Log::error('S3 Upload Error: ' . $e->getMessage());
                 session()->flash('error', 'Error uploading image: ' . $e->getMessage());
