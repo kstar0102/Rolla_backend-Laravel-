@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TripController;
+use App\Http\Controllers\Api\AdminPostController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\CarTypeController;
 use App\Http\Controllers\Api\ImageUploadController;
@@ -120,6 +121,15 @@ Route::group(['prefix' => 'droppin'], static function () {
     Route::get('data', [TripController::class, 'getDroppins']);
     Route::post('viewed', [TripController::class, 'droppinViewed']);
     Route::post('withnumberviewed', [TripController::class, 'droppinViewedwithnumber']);
+});
+
+// Admin posts routes
+Route::group(['prefix' => 'admin-posts'], static function () {
+    Route::get('active', [AdminPostController::class, 'getActivePosts']);
+    Route::get('all', [AdminPostController::class, 'getAllPosts']);
+    Route::post('create', [AdminPostController::class, 'createPost']);
+    Route::put('update/{id}', [AdminPostController::class, 'updatePost']);
+    Route::delete('delete/{id}', [AdminPostController::class, 'deletePost']);
 });
 
 Route::group(['prefix' => 'comment'], static function () {

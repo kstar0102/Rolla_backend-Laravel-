@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Droppin;
 use App\Models\Trip;
+use App\Models\AdminPost;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -1611,11 +1612,59 @@ class UserController extends Controller
                  });
              });
      
+             // Get active admin posts
+             $adminPosts = AdminPost::where('is_active', true)
+                 ->with('admin:id,first_name,last_name')
+                 ->orderBy('created_at', 'desc')
+                 ->get()
+                 ->map(function ($post) {
+                     return [
+                         'id' => 'admin_post_' . $post->id,
+                         'type' => 'admin_post',
+                         'admin_id' => $post->admin_id,
+                         'title' => $post->title,
+                         'content' => $post->content,
+                         'image_path' => $post->image_path ? asset('storage/' . $post->image_path) : null,
+                         'created_at' => $post->created_at->toISOString(),
+                         'updated_at' => $post->updated_at->toISOString(),
+                         'admin' => [
+                             'id' => $post->admin->id,
+                             'first_name' => $post->admin->first_name,
+                             'last_name' => $post->admin->last_name,
+                         ],
+                     ];
+                 });
+
+             // Combine trips and admin posts, then sort by created_at (newest first)
+             $allItems = collect($tripData)->map(function ($trip) {
+                 return [
+                     'type' => 'trip',
+                     'data' => $trip,
+                     'created_at' => $trip->created_at,
+                 ];
+             })->merge($adminPosts->map(function ($post) {
+                 return [
+                     'type' => 'admin_post',
+                     'data' => $post,
+                     'created_at' => \Carbon\Carbon::parse($post['created_at']),
+                 ];
+             }))->sortByDesc('created_at')->values();
+
+             // Merge into single array with type indicator
+             $mergedData = $allItems->map(function ($item) {
+                 $data = $item['data'];
+                 if (is_object($data)) {
+                     $data = $data->toArray();
+                 }
+                 $data['post_type'] = $item['type'];
+                 return $data;
+             })->toArray();
+
              return response()->json([
                  'statusCode' => true,
                  'message' => "Trips retrieved successfully",
                  'userinfo' => $user,
-                 'data' => $tripData,
+                 'trips' => $mergedData,
              ], 200);
          } catch (\Exception $e) {
              return response()->json([

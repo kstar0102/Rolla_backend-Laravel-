@@ -25,6 +25,9 @@ use App\Http\Livewire\DroppinDetails;
 use App\Http\Livewire\Admins;
 use App\Http\Livewire\AdminCreate;
 use App\Http\Livewire\AdminEdit;
+use App\Http\Livewire\AdminPosts;
+use App\Http\Livewire\AdminPostCreate;
+use App\Http\Livewire\AdminPostEdit;
 
 
 use App\Http\Livewire\Err404;
@@ -101,4 +104,7 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('/admins', Admins::class)->name('admins');
     Route::get('/admin/create', AdminCreate::class)->name('admincreate');
     Route::get('/admin/edit/{id}', AdminEdit::class)->name('adminedit');
+    Route::get('/admin-posts', AdminPosts::class)->name('adminposts');
+    Route::get('/admin-post/create', AdminPostCreate::class)->name('adminpostcreate');
+    Route::get('/admin-post/edit/{id}', AdminPostEdit::class)->name('adminpostedit');
 });
