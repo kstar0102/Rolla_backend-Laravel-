@@ -1624,7 +1624,7 @@ class UserController extends Controller
                          'admin_id' => $post->admin_id,
                          'title' => $post->title,
                          'content' => $post->content,
-                         'image_path' => $post->image_path ? asset('storage/' . $post->image_path) : null,
+                         'image_path' => $post->image_path, // Already contains full S3 URL
                          'created_at' => $post->created_at->toISOString(),
                          'updated_at' => $post->updated_at->toISOString(),
                          'admin' => [
