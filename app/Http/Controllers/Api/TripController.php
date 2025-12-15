@@ -905,9 +905,10 @@ class TripController extends Controller
             $droppin->viewed_count = ($droppin->viewed_count ?? 0) + 1;
 
             // append the viewer EVERY time (no uniqueness check)
+            // Defensive: ensure we don't lose existing data
             $existing = $droppin->view_count ?? '';
-            $viewedUserIds = $existing !== ''
-                ? array_values(array_filter(explode(',', $existing), fn ($v) => $v !== ''))
+            $viewedUserIds = $existing !== '' && $existing !== null
+                ? array_values(array_filter(explode(',', $existing), fn ($v) => $v !== '' && $v !== null))
                 : [];
             $viewedUserIds[] = (string) $validated['user_id']; // allow duplicates
             $droppin->view_count = implode(',', $viewedUserIds);
@@ -960,9 +961,10 @@ class TripController extends Controller
             $userId = (string) $validated['user_id'];
             
             // Get existing view_count (if any)
+            // Defensive: ensure we don't lose existing data
             $existing = $droppin->view_count ?? '';
-            $viewedUserIds = $existing !== ''
-                ? array_values(array_filter(explode(',', $existing), fn ($v) => $v !== ''))
+            $viewedUserIds = $existing !== '' && $existing !== null
+                ? array_values(array_filter(explode(',', $existing), fn ($v) => $v !== '' && $v !== null))
                 : [];
     
             // Append the user_id multiple times based on increment
