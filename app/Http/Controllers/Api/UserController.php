@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Droppin;
 use App\Models\Trip;
 use App\Models\AdminPost;
+use App\Models\RollaRatedLocation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -2095,6 +2096,32 @@ class UserController extends Controller
                 'message' => $e->getMessage(),
             ];
             return response()->json($response, 500);
+        }
+    }
+
+    /**
+     * Get all active Rolla-rated locations
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRollaRatedLocations(Request $request)
+    {
+        try {
+            $locations = RollaRatedLocation::where('is_active', true)
+                ->select('id', 'address', 'latitude', 'longitude', 'business_url')
+                ->get();
+
+            return response()->json([
+                'statusCode' => true,
+                'message' => 'success',
+                'data' => $locations,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'statusCode' => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 }

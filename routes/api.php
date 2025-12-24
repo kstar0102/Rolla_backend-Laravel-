@@ -138,6 +138,8 @@ Route::group(['prefix' => 'comment'], static function () {
 
 Route::get('car_types', [CarTypeController::class, 'getCarTypes']);
 
+Route::get('rolla-rated-locations', [UserController::class, 'getRollaRatedLocations']);
+
 Route::post('/upload-image', [ImageUploadController::class, 'upload']);
 
 // Catch-all route for unknown endpoints
