@@ -30,16 +30,6 @@ class RollaRatedLocations extends Component
         }
     }
 
-    public function toggleActive($id)
-    {
-        $location = RollaRatedLocation::find($id);
-        if ($location) {
-            $location->is_active = !$location->is_active;
-            $location->save();
-            $this->locations = RollaRatedLocation::with('admin')->orderBy('created_at', 'desc')->get();
-            session()->flash('message', 'Location status updated successfully.');
-        }
-    }
 
     public function render()
     {

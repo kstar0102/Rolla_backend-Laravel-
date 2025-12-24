@@ -71,12 +71,18 @@
                         <td>{{ $location->created_at->format('Y-m-d H:i') }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <button 
-                                    wire:click="toggleActive({{ $location->id }})" 
+                                <a 
+                                    href="/rolla-rated-location/details/{{ $location->id }}" 
+                                    class="btn btn-sm btn-outline-info"
+                                    title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a 
+                                    href="/rolla-rated-location/edit/{{ $location->id }}" 
                                     class="btn btn-sm btn-outline-primary"
-                                    title="{{ $location->is_active ? 'Deactivate' : 'Activate' }}">
-                                    <i class="fas fa-{{ $location->is_active ? 'toggle-on' : 'toggle-off' }}"></i>
-                                </button>
+                                    title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                                 <button 
                                     onclick="if(confirm('Are you sure you want to delete this location?')) { @this.call('remove', {{ $location->id }}) }" 
                                     class="btn btn-sm btn-outline-danger"

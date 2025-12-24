@@ -30,6 +30,8 @@ use App\Http\Livewire\AdminPostCreate;
 use App\Http\Livewire\AdminPostEdit;
 use App\Http\Livewire\RollaRatedLocations;
 use App\Http\Livewire\RollaRatedLocationCreate;
+use App\Http\Livewire\RollaRatedLocationEdit;
+use App\Http\Livewire\RollaRatedLocationDetails;
 
 
 use App\Http\Livewire\Err404;
@@ -111,4 +113,6 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('/admin-post/edit/{id}', AdminPostEdit::class)->name('adminpostedit');
     Route::get('/rolla-rated-locations', RollaRatedLocations::class)->name('rollaratedlocations');
     Route::get('/rolla-rated-location/create', RollaRatedLocationCreate::class)->name('rollaratedlocationcreate');
+    Route::get('/rolla-rated-location/edit/{id}', RollaRatedLocationEdit::class)->name('rollaratedlocationedit');
+    Route::get('/rolla-rated-location/details/{id}', RollaRatedLocationDetails::class)->name('rollaratedlocationdetails');
 });
