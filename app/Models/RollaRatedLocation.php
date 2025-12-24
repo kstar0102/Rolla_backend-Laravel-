@@ -12,6 +12,8 @@ class RollaRatedLocation extends Model
     protected $fillable = [
         'admin_id',
         'address',
+        'latitude',
+        'longitude',
         'business_url',
         'is_active',
     ];
