@@ -32,6 +32,9 @@ use App\Http\Livewire\RollaRatedLocations;
 use App\Http\Livewire\RollaRatedLocationCreate;
 use App\Http\Livewire\RollaRatedLocationEdit;
 use App\Http\Livewire\RollaRatedLocationDetails;
+use App\Http\Livewire\TermsAndConditions;
+use App\Http\Livewire\TermsAndConditionsCreate;
+use App\Http\Livewire\TermsAndConditionsEdit;
 
 
 use App\Http\Livewire\Err404;
@@ -115,4 +118,7 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('/rolla-rated-location/create', RollaRatedLocationCreate::class)->name('rollaratedlocationcreate');
     Route::get('/rolla-rated-location/edit/{id}', RollaRatedLocationEdit::class)->name('rollaratedlocationedit');
     Route::get('/rolla-rated-location/details/{id}', RollaRatedLocationDetails::class)->name('rollaratedlocationdetails');
+    Route::get('/terms-and-conditions', TermsAndConditions::class)->name('termsandconditions');
+    Route::get('/terms-and-conditions/create', TermsAndConditionsCreate::class)->name('termsandconditionscreate');
+    Route::get('/terms-and-conditions/edit/{id}', TermsAndConditionsEdit::class)->name('termsandconditionsedit');
 });
