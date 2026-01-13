@@ -11,7 +11,13 @@ class TermsAndConditions extends Component
 
     public function mount()
     {
-        $this->terms = TermsAndConditionsModel::orderBy('created_at', 'desc')->get();
+        try {
+            $this->terms = TermsAndConditionsModel::orderBy('created_at', 'desc')->get();
+        } catch (\Exception $e) {
+            // If table doesn't exist yet, set empty array
+            $this->terms = collect([]);
+            session()->flash('error', 'Database table not found. Please run migrations: php artisan migrate');
+        }
     }
 
     public function remove($id)

@@ -74,7 +74,7 @@
                                 <span class="badge bg-warning">Inactive</span>
                             @endif
                         </td>
-                        <td>{{ $term->created_at->format('Y-m-d H:i') }}</td>
+                        <td>{{ $term->created_at ? $term->created_at->format('Y-m-d H:i') : 'N/A' }}</td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <a href="/terms-and-conditions/edit/{{ $term->id }}" class="me-md-1" title="Edit">
