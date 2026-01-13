@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\CarTypeController;
 use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\TestController;
+use App\Http\Controllers\Api\TermsAndConditionsController;
 
 Route::get('/_mailtest', function (Request $req) {
     $fromAddress = config('mail.from.address');
@@ -139,6 +140,9 @@ Route::group(['prefix' => 'comment'], static function () {
 Route::get('car_types', [CarTypeController::class, 'getCarTypes']);
 
 Route::get('rolla-rated-locations', [UserController::class, 'getRollaRatedLocations']);
+
+Route::get('terms-and-conditions', [TermsAndConditionsController::class, 'getTermsAndConditions']);
+Route::post('terms-and-conditions', [TermsAndConditionsController::class, 'createOrUpdate']); // Admin endpoint
 
 Route::post('/upload-image', [ImageUploadController::class, 'upload']);
 
