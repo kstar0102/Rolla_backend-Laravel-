@@ -41,6 +41,7 @@
                     <th>Name</th>
                     <th>Email</th>
                     <th>Nick Name</th>
+                    <th>Hear From</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -57,6 +58,7 @@
                         <td>{{ $user->first_name }} {{ $user->last_name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->rolla_username }}</td>
+                        <td>{{ $user->hear_rolla ?? 'I saw an ad' }}</td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <a href="/user/edit/{{ $user->id }}" class="me-md-1">

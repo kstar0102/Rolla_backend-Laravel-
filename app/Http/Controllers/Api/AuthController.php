@@ -157,7 +157,7 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'rolla_username' => $request->rolla_username,
-                'hear_rolla' => $request->hear_rolla ?? 0,
+                'hear_rolla' => $request->hear_rolla ?? 'I saw an ad',
             ]);
 
             $user->save();

@@ -18,7 +18,7 @@ class UserCreate extends Component
     public $password;
     public $password_confirmation;
     public $rolla_username;
-    public $hear_rolla;
+    public $hear_rolla = 'I saw an ad';
 
     public function mount(User $user)
     {
@@ -27,7 +27,7 @@ class UserCreate extends Component
         $this->last_name = $user->last_name;
         $this->email = $user->email;
         $this->rolla_username = $user->rolla_username;
-        $this->hear_rolla = $user->hear_rolla;
+        $this->hear_rolla = $user->hear_rolla ?? 'I saw an ad';
     }
 
     public function updated($request)
@@ -60,6 +60,10 @@ class UserCreate extends Component
         }
 
         try {
+            // Set default hear_rolla if not provided
+            if (empty($validatedData['hear_rolla'])) {
+                $validatedData['hear_rolla'] = 'I saw an ad';
+            }
             $this->user->create($validatedData);
             session()->flash('message', 'user information saved successfully.');
         } catch (QueryException $e) {

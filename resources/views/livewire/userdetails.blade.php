@@ -83,7 +83,7 @@
                     <div class="col-sm-4 mb-3">
                         <div class="form-group">
                             <label for="hear_rolla">Hear From</label>
-                            <h5>{{$hear_rolla}}</h5>
+                            <h5>{{ $hear_rolla ?? 'I saw an ad' }}</h5>
                         </div>
                     </div>
                 </div>

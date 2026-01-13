@@ -31,7 +31,7 @@ class UserEdit extends Component
         $this->email = $this->user->email;
         $this->rolla_username = $this->user->rolla_username;
         $this->happy_place = $this->user->happy_place;
-        $this->hear_rolla = $this->user->hear_rolla;
+        $this->hear_rolla = $this->user->hear_rolla ?? 'I saw an ad';
         $this->photo = $this->user->photo;
         $this->bio = $this->user->bio;
         $this->garage = $this->user->garage;

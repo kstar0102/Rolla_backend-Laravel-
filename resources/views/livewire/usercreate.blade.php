@@ -67,6 +67,14 @@
                             @error('password_confirmation') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="hear_rolla">Hear From</label>
+                            <input wire:model.lazy="hear_rolla" class="form-control" id="hear_rolla" type="text" placeholder="I saw an ad" value="{{ $hear_rolla ?? 'I saw an ad' }}">
+                            @error('hear_rolla') <span class="text-danger">{{ $message }}</span> @enderror
+                            <small class="form-text text-muted">Default: "I saw an ad"</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
