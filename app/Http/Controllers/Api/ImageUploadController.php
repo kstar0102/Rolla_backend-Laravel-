@@ -60,7 +60,7 @@ class ImageUploadController extends Controller
                     'Key' => $fileName,
                     'Body' => $fileContents,
                     'ContentType' => $image->getMimeType(),
-                    'ACL' => 'public-read', // Make the file publicly accessible
+                    // ACL removed - bucket should have public read policy instead
                 ]);
 
                 // Generate public URL
