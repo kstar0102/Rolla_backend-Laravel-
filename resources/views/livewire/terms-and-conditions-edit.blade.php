@@ -20,7 +20,7 @@
         </div>
     @endif
 
-    <form wire:submit.prevent="update">
+    <form wire:submit.prevent="update" onsubmit="saveTinyMCEContent();">
         <div class="row">
             <div class="col-12 col-xl-12">
                 <div class="card card-body border-0 shadow mb-4">
@@ -83,6 +83,18 @@
             }, 300);
         });
 
+        // Function to save TinyMCE content before form submission
+        function saveTinyMCEContent() {
+            if (typeof tinymce !== 'undefined') {
+                var editor = tinymce.get('content');
+                if (editor) {
+                    editor.save();
+                    @this.set('content', editor.getContent());
+                    @this.set('content_type', 'html');
+                }
+            }
+        }
+
         function initializeTinyMCE() {
             if (typeof tinymce === 'undefined') {
                 console.error('TinyMCE not loaded');
@@ -101,13 +113,22 @@
                 plugins: [
                     'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
                     'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
+                    'paste' // Add paste plugin for Word content handling
                 ],
                 toolbar: 'undo redo | formatselect | ' +
                     'bold italic underline | alignleft aligncenter ' +
                     'alignright alignjustify | bullist numlist outdent indent | ' +
                     'removeformat | help',
                 content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
+                // Configure paste plugin to handle Word content
+                paste_as_text: false, // Keep formatting
+                paste_auto_cleanup_on_paste: true, // Clean up Word formatting
+                paste_remove_styles: false, // Keep styles
+                paste_remove_styles_if_webkit: true, // Remove webkit styles
+                paste_strip_class_attributes: 'all', // Remove class attributes
+                paste_retain_style_properties: 'color font-size font-family font-weight font-style text-align list-style-type', // Keep these styles
+                paste_merge_formats: true, // Merge formats
                 setup: function(editor) {
                     // Set initial content
                     if (initialContent) {
@@ -116,6 +137,21 @@
                         });
                     }
                     
+                    // Handle paste events to ensure content is preserved
+                    editor.on('paste', function(e) {
+                        // Let TinyMCE handle the paste, but ensure content is saved after paste completes
+                        setTimeout(function() {
+                            editor.save();
+                            @this.set('content', editor.getContent());
+                            @this.set('content_type', 'html');
+                        }, 200);
+                    });
+                    
+                    // Also handle paste preprocess to ensure content is captured
+                    editor.on('pastepreprocess', function(e) {
+                        // Content will be processed by TinyMCE
+                    });
+                    
                     // Sync with Livewire when content changes
                     editor.on('change', function() {
                         editor.save();
@@ -123,6 +159,13 @@
                         @this.set('content_type', 'html');
                     });
                     editor.on('blur', function() {
+                        editor.save();
+                        @this.set('content', editor.getContent());
+                        @this.set('content_type', 'html');
+                    });
+                    
+                    // Also sync on keyup to catch all changes
+                    editor.on('keyup', function() {
                         editor.save();
                         @this.set('content', editor.getContent());
                         @this.set('content_type', 'html');
