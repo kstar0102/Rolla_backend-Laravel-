@@ -77,8 +77,30 @@
     </form>
 
     <script>
+        // Wait for TinyMCE to load
+        function waitForTinyMCE(callback) {
+            if (typeof tinymce !== 'undefined' && tinymce.init) {
+                callback();
+            } else {
+                setTimeout(function() {
+                    waitForTinyMCE(callback);
+                }, 100);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            initializeTinyMCE();
+            waitForTinyMCE(function() {
+                initializeTinyMCE();
+            });
+        });
+
+        // Prevent Livewire from clearing the editor on updates
+        document.addEventListener('livewire:load', function() {
+            waitForTinyMCE(function() {
+                if (!tinymce.get('content')) {
+                    initializeTinyMCE();
+                }
+            });
         });
 
         // Function to save TinyMCE content before form submission
@@ -88,22 +110,22 @@
                 if (editor) {
                     var content = editor.getContent();
                     editor.save();
-                    // Force update Livewire with skip parameter
+                    // Update hidden input
+                    var hiddenInput = document.getElementById('content_hidden');
+                    if (hiddenInput) {
+                        hiddenInput.value = content;
+                    }
+                    // Force update Livewire
                     @this.set('content', content, true);
                     @this.set('content_type', 'html', true);
-                    // Also update the textarea directly as backup
-                    var textarea = document.getElementById('content');
-                    if (textarea) {
-                        textarea.value = content;
-                    }
                 }
             }
         }
 
         function initializeTinyMCE() {
-            if (typeof tinymce === 'undefined') {
-                console.error('TinyMCE not loaded');
-                return;
+            // Check if editor already exists
+            if (tinymce.get('content')) {
+                return; // Editor already initialized
             }
 
             // Initialize TinyMCE
@@ -115,120 +137,76 @@
                     'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
                     'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
                     'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
-                    'paste' // Add paste plugin for Word content handling
+                    'paste'
                 ],
                 toolbar: 'undo redo | formatselect | ' +
                     'bold italic underline | alignleft aligncenter ' +
                     'alignright alignjustify | bullist numlist outdent indent | ' +
                     'removeformat | help',
                 content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
-                // Configure paste plugin to handle Word content
-                paste_as_text: false, // Keep formatting
-                paste_auto_cleanup_on_paste: false, // Don't auto-cleanup (let us handle it)
-                paste_remove_styles: false, // Keep styles
-                paste_remove_styles_if_webkit: false, // Keep webkit styles
-                paste_strip_class_attributes: 'none', // Don't strip class attributes
-                paste_retain_style_properties: 'color font-size font-family font-weight font-style text-align list-style-type margin padding', // Keep these styles
-                paste_merge_formats: true, // Merge formats
-                paste_enable_default_filters: true, // Enable default filters
-                paste_word_valid_elements: 'b,strong,i,em,h1,h2,h3,h4,h5,h6,p,ol,ul,li,a[href],span,color,font-size,font-weight,font-style,text-decoration,br', // Valid elements from Word
+                // Configure paste plugin - simplified to preserve content
+                paste_as_text: false,
+                paste_auto_cleanup_on_paste: false,
+                paste_remove_styles: false,
+                paste_remove_styles_if_webkit: false,
+                paste_strip_class_attributes: 'none',
+                paste_retain_style_properties: 'all',
+                paste_merge_formats: true,
                 setup: function(editor) {
-                    // Handle paste events to ensure content is preserved
+                    // Sync content to Livewire after paste completes
                     editor.on('paste', function(e) {
-                        // Wait for paste to complete, then save
+                        // Use longer timeout to ensure paste is fully processed
                         setTimeout(function() {
-                            var content = editor.getContent();
-                            editor.save();
-                            // Update textarea
-                            var textarea = document.getElementById('content');
-                            if (textarea) {
-                                textarea.value = content;
-                            }
-                            // Update hidden input
-                            var hiddenInput = document.getElementById('content_hidden');
-                            if (hiddenInput) {
-                                hiddenInput.value = content;
-                                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
-                            // Force update Livewire
-                            @this.set('content', content, true);
-                            @this.set('content_type', 'html', true);
-                        }, 300);
+                            syncContent(editor);
+                        }, 500);
                     });
                     
-                    // Handle paste after it's processed
-                    editor.on('pastepostprocess', function(e) {
-                        setTimeout(function() {
-                            var content = editor.getContent();
-                            editor.save();
-                            // Update textarea
-                            var textarea = document.getElementById('content');
-                            if (textarea) {
-                                textarea.value = content;
-                            }
-                            // Update hidden input
-                            var hiddenInput = document.getElementById('content_hidden');
-                            if (hiddenInput) {
-                                hiddenInput.value = content;
-                                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
-                            @this.set('content', content, true);
-                            @this.set('content_type', 'html', true);
-                        }, 100);
-                    });
-                    
-                    // Sync with Livewire when content changes
+                    // Also sync on any content change
                     editor.on('change', function() {
-                        var content = editor.getContent();
-                        editor.save();
-                        // Update textarea and hidden input
-                        var textarea = document.getElementById('content');
-                        if (textarea) textarea.value = content;
-                        var hiddenInput = document.getElementById('content_hidden');
-                        if (hiddenInput) {
-                            hiddenInput.value = content;
-                            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                        @this.set('content', content, true);
-                        @this.set('content_type', 'html', true);
+                        syncContent(editor);
                     });
                     
                     editor.on('blur', function() {
-                        var content = editor.getContent();
-                        editor.save();
-                        // Update textarea and hidden input
-                        var textarea = document.getElementById('content');
-                        if (textarea) textarea.value = content;
-                        var hiddenInput = document.getElementById('content_hidden');
-                        if (hiddenInput) {
-                            hiddenInput.value = content;
-                            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                        @this.set('content', content, true);
-                        @this.set('content_type', 'html', true);
+                        syncContent(editor);
                     });
                     
-                    // Also sync on keyup to catch all changes
+                    // Sync on keyup (debounced)
                     var keyupTimeout;
                     editor.on('keyup', function() {
                         clearTimeout(keyupTimeout);
                         keyupTimeout = setTimeout(function() {
-                            var content = editor.getContent();
-                            editor.save();
-                            // Update textarea and hidden input
-                            var textarea = document.getElementById('content');
-                            if (textarea) textarea.value = content;
-                            var hiddenInput = document.getElementById('content_hidden');
-                            if (hiddenInput) {
-                                hiddenInput.value = content;
-                                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
-                            @this.set('content', content, true);
-                            @this.set('content_type', 'html', true);
-                        }, 300);
+                            syncContent(editor);
+                        }, 500);
                     });
                 }
             });
+        }
+
+        function syncContent(editor) {
+            try {
+                var content = editor.getContent();
+                editor.save();
+                
+                // Update textarea
+                var textarea = document.getElementById('content');
+                if (textarea) {
+                    textarea.value = content;
+                }
+                
+                // Update hidden input
+                var hiddenInput = document.getElementById('content_hidden');
+                if (hiddenInput) {
+                    hiddenInput.value = content;
+                    // Trigger Livewire update
+                    hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                
+                // Update Livewire
+                @this.set('content', content, true);
+                @this.set('content_type', 'html', true);
+            } catch (e) {
+                console.error('Error syncing content:', e);
+            }
         }
     </script>
 </div>
