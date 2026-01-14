@@ -35,20 +35,18 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="content">Content</label>
-                            <textarea wire:model="content" class="form-control" id="content" rows="20" placeholder="Enter Terms and Conditions content (HTML format recommended)"></textarea>
+                            <textarea wire:ignore class="form-control" id="content" rows="20" placeholder="Enter Terms and Conditions content"></textarea>
                             @error('content') <span class="text-danger">{{ $message }}</span> @enderror
                             <small class="form-text text-muted">
-                                <strong>Important:</strong> For proper formatting (bullet points, bold text), use HTML format and select "HTML" as content type.<br>
-                                Use <code>&lt;ul&gt;</code> and <code>&lt;li&gt;</code> for bullet points, <code>&lt;strong&gt;</code> or <code>&lt;b&gt;</code> for bold text, and <code>&lt;h2&gt;</code> or <code>&lt;h3&gt;</code> for section titles.
+                                <strong>Word-style Editor:</strong> Use the toolbar above to format your text (bold, bullet points, headings, etc.). Content will be automatically saved as HTML.
                             </small>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6 mb-3" style="display: none;">
                             <label for="content_type">Content Type</label>
                             <select wire:model="content_type" class="form-control" id="content_type">
-                                <option value="text">Text</option>
-                                <option value="html">HTML</option>
+                                <option value="html" selected>HTML</option>
                             </select>
                             @error('content_type') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
@@ -76,4 +74,47 @@
         </button>
         <a href="/terms-and-conditions" class="btn btn-secondary">Cancel</a>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTinyMCE();
+        });
+
+        function initializeTinyMCE() {
+            if (typeof tinymce === 'undefined') {
+                console.error('TinyMCE not loaded');
+                return;
+            }
+
+            // Initialize TinyMCE
+            tinymce.init({
+                selector: '#content',
+                height: 500,
+                menubar: false,
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                ],
+                toolbar: 'undo redo | formatselect | ' +
+                    'bold italic underline | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                    'removeformat | help',
+                content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
+                setup: function(editor) {
+                    // Sync with Livewire when content changes
+                    editor.on('change', function() {
+                        editor.save();
+                        @this.set('content', editor.getContent());
+                        @this.set('content_type', 'html');
+                    });
+                    editor.on('blur', function() {
+                        editor.save();
+                        @this.set('content', editor.getContent());
+                        @this.set('content_type', 'html');
+                    });
+                }
+            });
+        }
+    </script>
 </div>

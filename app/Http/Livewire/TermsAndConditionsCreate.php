@@ -9,7 +9,7 @@ class TermsAndConditionsCreate extends Component
 {
     public $title = '';
     public $content = '';
-    public $content_type = 'text';
+    public $content_type = 'html'; // Default to HTML when using WYSIWYG editor
     public $pdf_url = '';
     public $is_active = true;
 

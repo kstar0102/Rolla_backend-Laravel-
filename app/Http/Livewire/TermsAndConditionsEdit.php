@@ -24,7 +24,7 @@ class TermsAndConditionsEdit extends Component
         $this->term_id = $id;
         $this->title = $this->term->title;
         $this->content = $this->term->content;
-        $this->content_type = $this->term->content_type ?? 'text';
+        $this->content_type = $this->term->content_type ?? 'html'; // Default to HTML when using WYSIWYG editor
         $this->pdf_url = $this->term->pdf_url ?? '';
         $this->is_active = $this->term->is_active ?? true;
     }

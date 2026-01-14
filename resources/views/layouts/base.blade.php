@@ -103,6 +103,9 @@
     <!-- Volt JS -->
     <script src="/assets/js/volt.js"></script>
 
+    <!-- TinyMCE WYSIWYG Editor (Self-hosted) -->
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
+
     @if(env('IS_DEMO')) 
         <!-- Global site tag (gtag.js) - Google Analytics -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-141734189-6"></script>
