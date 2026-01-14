@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Aws\S3\S3Client;
 
 class ImageUploadController extends Controller
 {
@@ -27,8 +27,13 @@ class ImageUploadController extends Controller
 
             $image = $request->file('image');
             
-            // Check if S3 disk is configured
-            if (!config('filesystems.disks.s3.key') || !config('filesystems.disks.s3.secret')) {
+            // Check if S3 credentials are configured
+            $awsKey = env('AWS_ACCESS_KEY_ID');
+            $awsSecret = env('AWS_SECRET_ACCESS_KEY');
+            $awsRegion = env('AWS_DEFAULT_REGION', 'us-east-2');
+            $awsBucket = env('AWS_BUCKET');
+            
+            if (!$awsKey || !$awsSecret || !$awsBucket) {
                 Log::error('S3 credentials not configured');
                 return response()->json([
                     'error' => 'S3 storage is not configured. Please contact administrator.',
@@ -36,44 +41,42 @@ class ImageUploadController extends Controller
                 ], 500);
             }
 
-            // Upload to S3
+            // Upload to S3 using AWS SDK directly (same as AdminPostCreate)
             try {
-                $path = $image->store('images', 's3');
-                
-                if (!$path) {
-                    Log::error('Failed to store image on S3 - path is null');
-                    return response()->json([
-                        'error' => 'Failed to upload image to storage.',
-                        'message' => 'Storage upload failed'
-                    ], 500);
-                }
-                
-                // Set visibility
-                Storage::disk('s3')->setVisibility($path, 'public');
+                $s3Client = new S3Client([
+                    'version' => 'latest',
+                    'region' => $awsRegion,
+                    'credentials' => [
+                        'key' => $awsKey,
+                        'secret' => $awsSecret,
+                    ],
+                ]);
 
-                // Get URL
-                $url = Storage::disk('s3')->url($path);
+                $fileName = 'images/' . uniqid() . '_' . time() . '.' . $image->getClientOriginalExtension();
+                $fileContents = file_get_contents($image->getRealPath());
+
+                $result = $s3Client->putObject([
+                    'Bucket' => $awsBucket,
+                    'Key' => $fileName,
+                    'Body' => $fileContents,
+                    'ContentType' => $image->getMimeType(),
+                    'ACL' => 'public-read', // Make the file publicly accessible
+                ]);
+
+                // Generate public URL
+                $imageUrl = "https://{$awsBucket}.s3.{$awsRegion}.amazonaws.com/{$fileName}";
                 
-                if (!$url) {
-                    Log::error('Failed to get S3 URL for path: ' . $path);
-                    return response()->json([
-                        'error' => 'Failed to generate image URL.',
-                        'message' => 'URL generation failed'
-                    ], 500);
-                }
+                Log::info('Image uploaded successfully to S3: ' . $imageUrl);
+                return response()->json(['url' => $imageUrl]);
                 
-                Log::info('Image uploaded successfully to S3: ' . $url);
-                return response()->json(['url' => $url]);
-                
+            } catch (\Aws\Exception\AwsException $e) {
+                Log::error('AWS S3 Exception: ' . $e->getMessage());
+                Log::error('AWS Error Code: ' . $e->getAwsErrorCode());
+                return response()->json([
+                    'error' => 'Failed to upload image to cloud storage.',
+                    'message' => 'S3 upload error: ' . $e->getAwsErrorCode()
+                ], 500);
             } catch (\Exception $e) {
-                // Check if it's an AWS S3 exception
-                if (str_contains($e->getMessage(), 'AWS') || str_contains($e->getMessage(), 'S3')) {
-                    Log::error('S3/AWS Exception: ' . $e->getMessage());
-                    return response()->json([
-                        'error' => 'Failed to upload image to cloud storage.',
-                        'message' => 'Storage service error. Please check S3 configuration.'
-                    ], 500);
-                }
                 Log::error('Storage Exception: ' . $e->getMessage());
                 Log::error('Storage Exception Trace: ' . $e->getTraceAsString());
                 return response()->json([
