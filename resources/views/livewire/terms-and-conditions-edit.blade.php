@@ -35,9 +35,12 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="content">Content</label>
-                            <textarea wire:model="content" class="form-control" id="content" rows="15" placeholder="Enter Terms and Conditions content"></textarea>
+                            <textarea wire:model="content" class="form-control" id="content" rows="20" placeholder="Enter Terms and Conditions content (HTML format recommended)"></textarea>
                             @error('content') <span class="text-danger">{{ $message }}</span> @enderror
-                            <small class="form-text text-muted">You can enter plain text or HTML content. If using HTML, select "HTML" as content type.</small>
+                            <small class="form-text text-muted">
+                                <strong>Important:</strong> For proper formatting (bullet points, bold text), use HTML format and select "HTML" as content type.<br>
+                                Use <code>&lt;ul&gt;</code> and <code>&lt;li&gt;</code> for bullet points, <code>&lt;strong&gt;</code> or <code>&lt;b&gt;</code> for bold text, and <code>&lt;h2&gt;</code> or <code>&lt;h3&gt;</code> for section titles.
+                            </small>
                         </div>
                     </div>
                     <div class="row">
