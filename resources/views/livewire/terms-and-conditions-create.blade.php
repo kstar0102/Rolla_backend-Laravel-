@@ -35,7 +35,9 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="content">Content</label>
-                            <textarea wire:ignore.self class="form-control" id="content" rows="20" placeholder="Enter Terms and Conditions content"></textarea>
+                            <div wire:ignore>
+                                <textarea class="form-control" id="content" rows="20" placeholder="Enter Terms and Conditions content"></textarea>
+                            </div>
                             <input type="hidden" wire:model="content" id="content_hidden">
                             @error('content') <span class="text-danger">{{ $message }}</span> @enderror
                             <small class="form-text text-muted">
@@ -103,6 +105,28 @@
             });
         });
 
+        // CRITICAL: Save editor content before Livewire updates
+        document.addEventListener('livewire:before-update', function() {
+            var editor = tinymce.get('content');
+            if (editor) {
+                var content = editor.getContent();
+                editor.save();
+                // Store in a way that survives Livewire updates
+                sessionStorage.setItem('tinymce_content', content);
+            }
+        });
+
+        // CRITICAL: Restore editor content after Livewire updates
+        document.addEventListener('livewire:after-update', function() {
+            var editor = tinymce.get('content');
+            if (editor) {
+                var savedContent = sessionStorage.getItem('tinymce_content');
+                if (savedContent && savedContent !== editor.getContent()) {
+                    editor.setContent(savedContent);
+                }
+            }
+        });
+
         // Function to save TinyMCE content before form submission
         function saveTinyMCEContent() {
             if (typeof tinymce !== 'undefined') {
@@ -153,6 +177,13 @@
                 paste_retain_style_properties: 'all',
                 paste_merge_formats: true,
                 setup: function(editor) {
+                    // Restore saved content on init
+                    editor.on('init', function() {
+                        var savedContent = sessionStorage.getItem('tinymce_content');
+                        if (savedContent) {
+                            editor.setContent(savedContent);
+                        }
+                    });
                     // Sync content to Livewire after paste completes
                     editor.on('paste', function(e) {
                         // Use longer timeout to ensure paste is fully processed
@@ -161,22 +192,26 @@
                         }, 500);
                     });
                     
-                    // Also sync on any content change
+                    // Also sync on any content change (but less frequently)
+                    var changeTimeout;
                     editor.on('change', function() {
-                        syncContent(editor);
+                        clearTimeout(changeTimeout);
+                        changeTimeout = setTimeout(function() {
+                            syncContent(editor);
+                        }, 1000); // Wait 1 second before syncing to avoid too many updates
                     });
                     
                     editor.on('blur', function() {
                         syncContent(editor);
                     });
                     
-                    // Sync on keyup (debounced)
+                    // Sync on keyup (debounced - less frequent)
                     var keyupTimeout;
                     editor.on('keyup', function() {
                         clearTimeout(keyupTimeout);
                         keyupTimeout = setTimeout(function() {
                             syncContent(editor);
-                        }, 500);
+                        }, 2000); // Wait 2 seconds to reduce Livewire updates
                     });
                 }
             });
@@ -187,21 +222,22 @@
                 var content = editor.getContent();
                 editor.save();
                 
+                // Store in sessionStorage to survive Livewire updates
+                sessionStorage.setItem('tinymce_content', content);
+                
                 // Update textarea
                 var textarea = document.getElementById('content');
                 if (textarea) {
                     textarea.value = content;
                 }
                 
-                // Update hidden input
+                // Update hidden input WITHOUT triggering Livewire update immediately
                 var hiddenInput = document.getElementById('content_hidden');
                 if (hiddenInput) {
                     hiddenInput.value = content;
-                    // Trigger Livewire update
-                    hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
                 
-                // Update Livewire
+                // Update Livewire with skipWire to prevent re-render
                 @this.set('content', content, true);
                 @this.set('content_type', 'html', true);
             } catch (e) {
