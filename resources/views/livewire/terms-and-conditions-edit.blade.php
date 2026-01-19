@@ -170,10 +170,11 @@
                     'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
                     'paste'
                 ],
-                toolbar: 'undo redo | formatselect | ' +
+                toolbar: 'undo redo | formatselect | fontsizeselect | ' +
                     'bold italic underline | alignleft aligncenter ' +
                     'alignright alignjustify | bullist numlist outdent indent | ' +
                     'removeformat | help',
+                font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt 48pt 60pt 72pt',
                 content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
                 // Configure paste plugin - simplified to preserve content
                 paste_as_text: false,
