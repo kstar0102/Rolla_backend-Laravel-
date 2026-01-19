@@ -170,13 +170,13 @@
                     'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
                     'paste'
                 ],
-                toolbar: 'undo redo | formatselect | fontsizeselect | ' +
+                toolbar: 'undo redo | formatselect | fontsize | ' +
                     'bold italic underline | alignleft aligncenter ' +
                     'alignright alignjustify | bullist numlist outdent indent | ' +
                     'removeformat | help',
                 font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt 48pt 60pt 72pt',
-                content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
-                // Configure paste plugin - simplified to preserve content
+                content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; } ul ul { list-style-type: circle; } ul ul ul { list-style-type: square; }',
+                // Configure paste plugin - preserve lists and formatting
                 paste_as_text: false,
                 paste_auto_cleanup_on_paste: false,
                 paste_remove_styles: false,
@@ -184,6 +184,56 @@
                 paste_strip_class_attributes: 'none',
                 paste_retain_style_properties: 'all',
                 paste_merge_formats: true,
+                paste_enable_default_filters: false,
+                // Better list handling - preserve nested lists
+                forced_root_block: 'p',
+                forced_root_block_attrs: {},
+                convert_newlines_to_brs: false,
+                remove_linebreaks: false,
+                // Ensure lists are properly formatted with nested support
+                advlist_bullet_styles: 'disc circle square',
+                advlist_number_styles: 'lower-alpha lower-roman upper-alpha upper-roman',
+                // Enable nested list indentation
+                indent_use_margin: false,
+                indent_bottom: true,
+                // Ensure proper list behavior
+                list_indent_on_tab: true,
+                // Preserve list structure when pasting
+                paste_preprocess: function(plugin, args) {
+                    // Ensure nested lists are preserved
+                    var content = args.content;
+                    
+                    // Fix nested list structure - ensure nested <ul> is inside <li>
+                    // Pattern: <li>text<ul> should become <li>text<ul> (already correct)
+                    // Pattern: <li>text</li><ul> should become <li>text<ul>
+                    content = content.replace(/<\/li>\s*<ul/gi, '<ul');
+                    content = content.replace(/<li([^>]*)>([^<]*)<ul/gi, '<li$1>$2<ul');
+                    
+                    // Ensure proper closing tags for nested lists
+                    content = content.replace(/<\/ul>\s*<\/li>/gi, '</ul></li>');
+                    
+                    // Fix any orphaned list items
+                    content = content.replace(/<li([^>]*)>\s*<\/li>/gi, '');
+                    
+                    args.content = content;
+                },
+                paste_postprocess: function(plugin, args) {
+                    // After paste, ensure nested lists are properly formatted
+                    var editor = plugin.editor;
+                    var content = args.node;
+                    
+                    // Find all nested lists and ensure they're properly structured
+                    var nestedLists = content.querySelectorAll('ul ul, ol ol, ul ol, ol ul');
+                    nestedLists.forEach(function(nestedList) {
+                        // Ensure parent is a list item
+                        var parent = nestedList.parentElement;
+                        if (parent && parent.tagName !== 'LI') {
+                            var li = document.createElement('li');
+                            parent.insertBefore(li, nestedList);
+                            li.appendChild(nestedList);
+                        }
+                    });
+                },
                 setup: function(editor) {
                     // Set initial content
                     editor.on('init', function() {
@@ -194,6 +244,42 @@
                         } else if (initialContent) {
                             // Otherwise use the initial content from database
                             editor.setContent(initialContent);
+                        }
+                    });
+                    
+                    // Ensure proper list formatting when list buttons are clicked
+                    editor.on('ExecCommand', function(e) {
+                        // When bullet or numbered list is applied
+                        if (e.command === 'InsertUnorderedList' || e.command === 'InsertOrderedList') {
+                            setTimeout(function() {
+                                // Ensure paragraphs are converted to list items
+                                var body = editor.getBody();
+                                var paragraphs = body.querySelectorAll('p');
+                                paragraphs.forEach(function(p) {
+                                    // If paragraph is inside a list, convert to list item
+                                    var parent = p.parentElement;
+                                    if (parent && (parent.tagName === 'UL' || parent.tagName === 'OL')) {
+                                        var li = document.createElement('li');
+                                        li.innerHTML = p.innerHTML;
+                                        parent.replaceChild(li, p);
+                                    }
+                                });
+                                syncContent(editor);
+                            }, 100);
+                        }
+                    });
+                    
+                    // Handle indentation properly for lists
+                    editor.on('keydown', function(e) {
+                        // Tab key should indent list items, not paragraphs
+                        if (e.keyCode === 9 && !e.shiftKey) { // Tab key
+                            var selection = editor.selection;
+                            var node = selection.getNode();
+                            
+                            // If we're in a list item, let TinyMCE handle it naturally
+                            if (node.tagName === 'LI' || node.closest('li')) {
+                                return; // Let default behavior handle list indentation
+                            }
                         }
                     });
                     
