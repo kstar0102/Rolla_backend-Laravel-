@@ -141,9 +141,11 @@ class AuthController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|max:255|unique:users,email',
-            'password' => 'required|string|min:6',
+            'password' => 'nullable|string|min:6', // Optional for Google Sign-In users
             'rolla_username' => 'required|string|max:255|unique:users,rolla_username',
-            'hear_rolla' => 'required|string|max:100'
+            'hear_rolla' => 'required|string|max:100',
+            'google_id' => 'nullable|string|max:255', // Optional for Google Sign-In
+            'photo' => 'nullable|string', // Optional for Google Sign-In
         ]);
 
         if ($validator->fails()) {
@@ -151,14 +153,28 @@ class AuthController extends Controller
         }
 
         try {
-            $user = new User([
+            $userData = [
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
                 'rolla_username' => $request->rolla_username,
                 'hear_rolla' => $request->hear_rolla ?? 'I saw an ad',
-            ]);
+            ];
+
+            // Set password only if provided (not for Google Sign-In users)
+            if ($request->password) {
+                $userData['password'] = Hash::make($request->password);
+            }
+
+            // Set Google ID and photo if provided
+            if ($request->google_id) {
+                $userData['google_id'] = $request->google_id;
+            }
+            if ($request->photo) {
+                $userData['photo'] = $request->photo;
+            }
+
+            $user = new User($userData);
 
             $user->save();
             $token = $user->createToken('auth_token')->plainTextToken;
@@ -315,6 +331,7 @@ class AuthController extends Controller
                     return response()->json([
                         'message' => 'Username required',
                         'needs_username' => true,
+                        'is_new_user' => false, // Existing user, just needs username
                         'user_id' => $user->id,
                         'email' => $user->email,
                         'first_name' => $user->first_name,
@@ -322,28 +339,18 @@ class AuthController extends Controller
                     ], 200);
                 }
 
-                // User has username - proceed with login
+                // User has username - proceed with login (registered user)
                 return $this->generateLoginResponse($user);
             } else {
-                // New user - create account but require username
-                $user = new User([
+                // New user - email not registered, return flag to go to registration step 2
+                return response()->json([
+                    'message' => 'Email not registered',
+                    'is_new_user' => true,
+                    'email' => $request->email,
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
-                    'email' => $request->email,
                     'google_id' => $request->google_id,
                     'photo' => $request->photo,
-                    'password' => null, // No password for Google users
-                ]);
-
-                $user->save();
-
-                return response()->json([
-                    'message' => 'Username required',
-                    'needs_username' => true,
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
                 ], 200);
             }
         } catch (Exception $e) {
